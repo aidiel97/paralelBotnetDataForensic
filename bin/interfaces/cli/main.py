@@ -30,7 +30,7 @@ def execute(menuIndex, listMenu):
     print("This Menu Does Not Exist, Please Try Another Input!")
     time.sleep(3) # adding 3 seconds time delay
     os.system("clear")
-    menu() #call menu again
+    menu(listMenu) #call menu again
 
 def menu(listMenu):
   banner(listMenu)
