@@ -124,6 +124,10 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+	 
+# Ignore pickles
+*.pkl
+**/*.pkl
 
 # Pyre type checker
 .pyre/
