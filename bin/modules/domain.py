@@ -1,3 +1,4 @@
+import bin.interfaces.cli.dataset as datasetMenu
 import bin.helpers.utilities.dataLoader as loader
 import bin.modules.preProcessing.transform as transform
 import bin.modules.preProcessing.handlingNull as null
@@ -11,11 +12,11 @@ import pandas as pd
 def sensorBasedCausalityAnalysis():
   ctx = 'SensorBasedBotnetCausalityAnalysis'
   start = watcherStart(ctx)
-  # datasetName, stringDatasetName, selected = datasetMenu.getData()
+  datasetName, stringDatasetName, selected = datasetMenu.getData()
 
-  datasetName = ncc2
-  stringDatasetName = 'ncc2'
-  selected = 'scenario1'
+  # datasetName = ncc2
+  # stringDatasetName = 'ncc2'
+  # selected = 'scenario1'
 
   df = loader.binetflow(datasetName, selected, stringDatasetName)
 
@@ -24,6 +25,7 @@ def sensorBasedCausalityAnalysis():
   df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
   #transform with dictionary
   df['State']= df['State'].map(stateDict).fillna(0.0).astype(int)
+  df['Proto']= df['Proto'].map(protoDict).fillna(0.0).astype(int)
   df.dropna(subset = ["DstAddr"], inplace=True)
   df.dropna(subset = ["SrcAddr"], inplace=True)
   df['Sport'] = pd.factorize(df.Sport)[0]
@@ -31,12 +33,7 @@ def sensorBasedCausalityAnalysis():
   #transform ip to integer
   df['SrcAddr'] = df['SrcAddr'].apply(transform.ipToInteger).fillna(0)
   df['DstAddr'] = df['DstAddr'].apply(transform.ipToInteger).fillna(0)
-  #one-hot encoder
-  categorical_cols = ['Proto','Dir']
-  for col in categorical_cols:
-    dummy_cols = pd.get_dummies(df[col], drop_first=True, prefix=col)
-    df = pd.concat([df,dummy_cols],axis=1)
-    df.drop(columns=col, axis=1, inplace=True)
+  
 
   null.setEmptyString(df)
   cleansing.featureDropping(df, ['sTos','dTos'])
@@ -47,14 +44,13 @@ def sensorBasedCausalityAnalysis():
     df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
   )]
 
-  
   x_train=train.drop(categorical_features,axis=1)
   x_test=test.drop(categorical_features,axis=1)
   y_train = train['ActivityLabel']
   y_test = test['ActivityLabel']
 
   ml.modelling(x_train, y_train)
-  predictionResult = ml.classification(x_test)
-  ml.evaluation(ctx, y_test, predictionResult)
+  # predictionResult = ml.classification(x_test)
+  # ml.evaluation(ctx, y_test, predictionResult)
 
   watcherEnd(ctx, start)
