@@ -25,13 +25,13 @@ def flow(datasetName, stringDatasetName, selected):
   background = df[df['ActivityLabel'] == 'background']
 
   try:
-    os.makedirs('collections/'+stringDatasetName+'/'+selected)
+    os.makedirs('collections/timeGap/'+stringDatasetName+'/'+selected)
   except FileExistsError:
     # directory already exists
     pass
   
   try:
-    os.makedirs('collections/'+stringDatasetName+'/'+selected)
+    os.makedirs('collections/timeGap//'+stringDatasetName+'/'+selected)
   except FileExistsError:
     # directory already exists
     pass
