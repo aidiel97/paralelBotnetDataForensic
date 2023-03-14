@@ -37,9 +37,9 @@ def flow(datasetName, stringDatasetName, selected):
     pass
   
   inclFeatures = ['Diff','SrcAddr','Sport','DstAddr', 'Dport', 'Proto']
-  botnet[inclFeatures].describe().to_csv('collections/'+stringDatasetName+'/'+selected+'/botnet.csv',index=True)
-  normal[inclFeatures].describe().to_csv('collections/'+stringDatasetName+'/'+selected+'/normal.csv',index=True)
-  background[inclFeatures].describe().to_csv('collections/'+stringDatasetName+'/'+selected+'/background.csv',index=True)
+  botnet[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/botnet.csv',index=True)
+  normal[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/normal.csv',index=True)
+  background[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/background.csv',index=True)
 
   watcherEnd(ctx, start)
 
