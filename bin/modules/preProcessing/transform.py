@@ -2,7 +2,9 @@ import re
 import pandas as pd
 import socket, struct
 import numpy as np
+import time
 
+from datetime import datetime
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 
@@ -12,6 +14,13 @@ def ipToInteger(ip):
     return struct.unpack("!L", packedIP)[0]
   except OSError:
     return np.nan #return NaN when IP Address is not valid
+  
+def timeToUnix(startTime):
+  # date_format = datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
+  # unix_time = datetime.timestamp(date_format)
+  t = pd.Timestamp(startTime)
+  unix_time = time.mktime(t.timetuple())
+  return unix_time
 
 def labelProcessing(label):
   listOfWord = label.split("-")
