@@ -22,6 +22,15 @@ def timeToUnix(startTime):
   unix_time = time.mktime(t.timetuple())
   return unix_time
 
+def labelSimplier(label):
+  label = label.lower()
+  if 'botnet' in label: 
+    return 'botnet'
+  elif 'background' in label:
+    return 'background'
+  else:
+    return 'normal'
+
 def labelProcessing(label):
   listOfWord = label.split("-")
   validateArray = []
