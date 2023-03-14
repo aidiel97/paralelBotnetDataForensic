@@ -3,8 +3,10 @@ import bin.modules.preProcessing.transform as preProcessing
 
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
+from bin.helpers.utilities.csvGenerator import exportWithObject
 
 import os
+import json
 
 def flow(datasetName, stringDatasetName, selected):
   ctx='Sequential Pattern Mining for Detection'
@@ -37,15 +39,27 @@ def flow(datasetName, stringDatasetName, selected):
     pass
   
   inclFeatures = ['Diff','SrcAddr','Sport','DstAddr', 'Dport', 'Proto']
-  botnet[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/botnet.csv',index=True)
-  normal[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/normal.csv',index=True)
-  background[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/background.csv',index=True)
+  
+  b_stat = json.loads(botnet[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
+  b_stat['dataset'] = stringDatasetName
+  b_stat['subDataset'] = selected
+  b_stat['desc'] = 'botnet'
+
+  print(b_stat)
+  # botnet[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/botnet.csv',index=True)
+  # normal[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/normal.csv',index=True)
+  # background[inclFeatures].describe().to_csv('collections/timeGap/'+stringDatasetName+'/'+selected+'/background.csv',index=True)
 
   watcherEnd(ctx, start)
 
 def main():
-  for dataset in listAvailableDatasets[:3]:
-    print(dataset['name'])
-    for scenario in dataset['list']:
-      print(scenario)
-      flow(dataset['list'], dataset['name'], scenario)
+  # for dataset in listAvailableDatasets[:3]:
+  #   print(dataset['name'])
+  #   for scenario in dataset['list']:
+  #     print(scenario)
+  #     flow(dataset['list'], dataset['name'], scenario)
+
+  datasetName = ctu
+  stringDatasetName = 'ctu'
+  selected = 'scenario7'
+  flow(datasetName, stringDatasetName, selected)

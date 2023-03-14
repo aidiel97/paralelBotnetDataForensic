@@ -46,3 +46,15 @@ def classificationResult(classificationContext, algorithm, tn, fp, fn, tp):
     dict_object.writerow(dict)
 
   watcherEnd(ctx, start)
+
+def exportWithObject(object, fileName):
+  ctx= 'Export Similarity Result'
+  start= watcherStart(ctx)
+  # list of column names 
+  field_names = object.keys()
+
+  with open(fileName, 'a', newline='') as csv_file:
+    dict_object = csv.DictWriter(csv_file, fieldnames=field_names) 
+    dict_object.writerow(object)
+
+  watcherEnd(ctx, start)
