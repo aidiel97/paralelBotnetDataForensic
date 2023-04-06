@@ -32,10 +32,7 @@ def main():
 
   dictLabel = model.main(model.labelModel, df['Label'].unique())
   print(dictLabel)
-  insertOne({
-    'ii':1
-  },'laaa')
-  # upsertmany((list(model.labelModel.keys())[0]),dictLabel,'label')
+  upsertmany((list(model.labelModel.keys())[0]),dictLabel,'label')
 
   exit()
   seq = [] #in one subDataset has one sequence
