@@ -31,8 +31,10 @@ def main():
   # print(df['Label'].unique())
 
   dictLabel = model.main(model.labelModel, df['Label'].unique())
-  print(dictLabel)
-  upsertmany((list(model.labelModel.keys())[0]),dictLabel,'label')
+  dictIP = model.main(model.IpAddressModel, ipInData)
+
+  upsertmany((list(model.labelModel.keys())[0]),dictLabel,'Label')
+  upsertmany((list(model.IpAddressModel.keys())[0]),dictIP,'IPaddress')
 
   exit()
   seq = [] #in one subDataset has one sequence
