@@ -32,15 +32,19 @@ def labelSimplier(label):
     return 'normal'
 
 def labelProcessing(label):
-  listOfWord = label.split("-")
+  extractWordCollection = ['V','flow','To','From','Botnet','Normal','Background','']
+  labelWithoutDigit = re.sub(r'\d', '', label)
+  listOfWord = labelWithoutDigit.replace('=', '-').split("-")
   validateArray = []
-  for char in listOfWord:
-    if(bool(re.search(r'\d', char)) or char == 'From' or char == 'Botnet'):
-      continue
-    else:
-      validateArray.append(char)
-
-  return '-'.join(validateArray)
+  if label == 'flow=Background':
+    return 'Background'
+  else:
+    for char in listOfWord:
+      if char in extractWordCollection:
+        continue
+      else:
+        validateArray.append(char)
+    return '-'.join(validateArray)
 
 def normalization(df):
   ctx= '<PRE-PROCESSING> Normalization'

@@ -25,6 +25,8 @@ def flow(datasetName, stringDatasetName, selected):
   normal = df[df['ActivityLabel'] == 'normal']
   background = df[df['ActivityLabel'] == 'background']
 
+  print(botnet['SrcAddr'].value_counts())
+
   # unique, counts = np.unique(botnet['Diff'], return_counts=True)
   # plt.scatter(x=unique,y=counts,c='red')
   
@@ -37,36 +39,38 @@ def flow(datasetName, stringDatasetName, selected):
   # plt.savefig('collections/test.png')
   # exit()
 
-  inclFeatures = ['Diff','SrcAddr','Sport','DstAddr', 'Dport', 'Proto']
+  # inclFeatures = ['Diff','SrcAddr','Sport','DstAddr', 'Dport', 'Proto']
 
-  backgorund_stat = json.loads(background[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
-  backgorund_stat['dataset'] = stringDatasetName
-  backgorund_stat['subDataset'] = selected
-  backgorund_stat['desc'] = 'background'  
-  exportWithObject(backgorund_stat,'collections/timeGap.csv')
+  # backgorund_stat = json.loads(background[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
+  # backgorund_stat['dataset'] = stringDatasetName
+  # backgorund_stat['subDataset'] = selected
+  # backgorund_stat['desc'] = 'background'  
+  # exportWithObject(backgorund_stat,'collections/timeGap.csv')
 
-  botnet_stat = json.loads(botnet[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
-  botnet_stat['dataset'] = stringDatasetName
-  botnet_stat['subDataset'] = selected
-  botnet_stat['desc'] = 'botnet'  
-  exportWithObject(botnet_stat,'collections/timeGap.csv')
+  # botnet_stat = json.loads(botnet[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
+  # botnet_stat['dataset'] = stringDatasetName
+  # botnet_stat['subDataset'] = selected
+  # botnet_stat['desc'] = 'botnet'  
+  # exportWithObject(botnet_stat,'collections/timeGap.csv')
 
-  normal_stat = json.loads(normal[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
-  normal_stat['dataset'] = stringDatasetName
-  normal_stat['subDataset'] = selected
-  normal_stat['desc'] = 'normal'  
-  exportWithObject(normal_stat,'collections/timeGap.csv')
+  # normal_stat = json.loads(normal[inclFeatures].describe().loc[['mean','std','min','max']].to_json())['Diff']
+  # normal_stat['dataset'] = stringDatasetName
+  # normal_stat['subDataset'] = selected
+  # normal_stat['desc'] = 'normal'  
+  # exportWithObject(normal_stat,'collections/timeGap.csv')
+
+
 
   watcherEnd(ctx, start)
 
 def main():
-  for dataset in listAvailableDatasets[:3]:
-    print(dataset['name'])
-    for scenario in dataset['list']:
-      print(scenario)
-      flow(dataset['list'], dataset['name'], scenario)
+  # for dataset in listAvailableDatasets[:3]:
+  #   print(dataset['name'])
+  #   for scenario in dataset['list']:
+  #     print(scenario)
+  #     flow(dataset['list'], dataset['name'], scenario)
 
-  # datasetName = ctu
-  # stringDatasetName = 'ctu'
-  # selected = 'scenario7'
-  # flow(datasetName, stringDatasetName, selected)
+  datasetName = ncc2
+  stringDatasetName = 'ncc2'
+  selected = 'scenario2'
+  flow(datasetName, stringDatasetName, selected)

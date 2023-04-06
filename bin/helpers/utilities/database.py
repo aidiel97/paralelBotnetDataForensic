@@ -43,6 +43,20 @@ def deleteMany(query, collectionName=defaultCollection):
   collection.delete_many(query)
   print("\t..Success delete many ", str(query))
 
+def upsertmany(id, data, collectionName=defaultCollection):
+  collection = database[collectionName]
+  upsert = []
+  for element in data:
+    upsert.append(
+      pymongo.UpdateOne(
+        {id: element[id]},
+        {'$set': {k: v for k, v in element.items() if k != id}},
+        upsert=True
+      )
+    )
+  collection.bulk_write(upsert)
+  print("Success Upsert many")
+
 #query
 def findOne(query={}, collectionName=defaultCollection):
   collection = database[collectionName]
