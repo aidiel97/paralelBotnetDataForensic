@@ -25,16 +25,16 @@ def main():
   df['Diff'] = df['Unix'] - df['Unix'][0]
   df['NewLabel'] = df['Label'].apply(preProcessing.labelProcessing)
 
-  ipInData = list(df['SrcAddr'].unique()) + list(df['DstAddr'].unique())
+  ipInData = unique(list(df['SrcAddr'].unique()) + list(df['DstAddr'].unique()))
   # print(unique(ipInData))
   # print(df['NewLabel'].unique())
   # print(df['Label'].unique())
 
-  dictLabel = model.main(model.labelModel, df['Label'].unique())
+  dictLabel = model.main(model.labelModel, df['NewLabel'].unique())
   dictIP = model.main(model.IpAddressModel, ipInData)
 
-  upsertmany((list(model.labelModel.keys())[0]),dictLabel,'Label')
-  upsertmany((list(model.IpAddressModel.keys())[0]),dictIP,'IPaddress')
+  upsertmany((list(model.labelModel.keys())[1]),dictLabel,'Label')
+  upsertmany((list(model.IpAddressModel.keys())[1]),dictIP,'IPaddress')
 
   exit()
   seq = [] #in one subDataset has one sequence

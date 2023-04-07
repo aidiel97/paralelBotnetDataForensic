@@ -5,6 +5,7 @@ from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.csvGenerator import exportWithObject
 
+import pandas as pd
 import os
 import json
 import matplotlib.pyplot as plt
@@ -25,9 +26,31 @@ def flow(datasetName, stringDatasetName, selected):
   normal = df[df['ActivityLabel'] == 'normal']
   background = df[df['ActivityLabel'] == 'background']
 
-  print(botnet['SrcAddr'].value_counts())
+  # plt.savefig('collections/test.png')
+  tgBotnet = botnet.loc[botnet['Diff'] != 0, 'Diff'].values.tolist()
+  tgBackground = background.loc[background['Diff'] != 0, 'Diff'].values.tolist()
+  tgNormal = normal.loc[normal['Diff'] != 0, 'Diff'].values.tolist()
+
+  # Pad the shorter list with NaN values to match the length of the longer list
+  max_len = max(len(tgBotnet), len(tgBackground), len(tgNormal))
+  tgBotnet += [np.nan] * (max_len - len(tgBotnet))
+  tgBackground += [np.nan] * (max_len - len(tgBackground))
+  tgNormal += [np.nan] * (max_len - len(tgNormal))
+
+  # Create a pandas DataFrame with the two columns
+  df = pd.DataFrame({'botnet':tgBotnet, 'background':tgBackground, 'normal': tgNormal})
+
+  # Create a boxplot of the two columns
+  plt.figure()
+  df.boxplot(column=['botnet'], showfliers=False)
+  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-botnet-boxplot.png')
+  df.boxplot(column=['background'], showfliers=False)
+  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-background-boxplot.png')
+  df.boxplot(column=['normal'], showfliers=False)
+  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-normal-boxplot.png')
 
   # unique, counts = np.unique(botnet['Diff'], return_counts=True)
+  # print(unique)
   # plt.scatter(x=unique,y=counts,c='red')
   
   # unique, counts = np.unique(background['Diff'], return_counts=True)
@@ -35,9 +58,6 @@ def flow(datasetName, stringDatasetName, selected):
 
   # unique, counts = np.unique(normal['Diff'], return_counts=True)
   # plt.scatter(x=unique,y=counts,c='green')
-
-  # plt.savefig('collections/test.png')
-  # exit()
 
   # inclFeatures = ['Diff','SrcAddr','Sport','DstAddr', 'Dport', 'Proto']
 
@@ -59,18 +79,16 @@ def flow(datasetName, stringDatasetName, selected):
   # normal_stat['desc'] = 'normal'  
   # exportWithObject(normal_stat,'collections/timeGap.csv')
 
-
-
   watcherEnd(ctx, start)
 
 def main():
-  # for dataset in listAvailableDatasets[:3]:
-  #   print(dataset['name'])
-  #   for scenario in dataset['list']:
-  #     print(scenario)
-  #     flow(dataset['list'], dataset['name'], scenario)
+  for dataset in listAvailableDatasets[:3]:
+    print(dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      flow(dataset['list'], dataset['name'], scenario)
 
-  datasetName = ncc2
-  stringDatasetName = 'ncc2'
-  selected = 'scenario2'
-  flow(datasetName, stringDatasetName, selected)
+  # datasetName = ctu
+  # stringDatasetName = 'ctu'
+  # selected = 'scenario7'
+  # flow(datasetName, stringDatasetName, selected)
