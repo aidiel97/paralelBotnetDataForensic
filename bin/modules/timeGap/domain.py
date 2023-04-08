@@ -116,16 +116,25 @@ def main():
   botnetEquateDiff = equateListLength(botnetDiff)
   botnetDf = pd.DataFrame(botnetEquateDiff)
   botnetDf.boxplot(showfliers=False)
+  plt.xticks(rotation=90)
+  # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
+  plt.subplots_adjust(bottom=0.25)
   plt.savefig('collections/botnet-boxplot.png')
 
   plt.figure()
   backgroundEquateDiff = equateListLength(backgroundDiff)
   backgroundDf = pd.DataFrame(backgroundEquateDiff)
   backgroundDf.boxplot(showfliers=False)
+  plt.xticks(rotation=90)
+  # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
+  plt.subplots_adjust(bottom=0.25)
   plt.savefig('collections/background-boxplot.png')
 
   plt.figure()
   normalEquateDiff = equateListLength(normalDiff)
   normalDf = pd.DataFrame(normalEquateDiff)
   normalDf.boxplot(showfliers=False)
+  plt.xticks(rotation=90)
+  # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
+  plt.subplots_adjust(bottom=0.25)
   plt.savefig('collections/normal-boxplot.png')
