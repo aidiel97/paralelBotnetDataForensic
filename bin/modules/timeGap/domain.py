@@ -40,10 +40,10 @@ def flow(datasetName, stringDatasetName, selected):
   # tgBotnet += [np.nan] * (max_len - len(tgBotnet))
   # tgBackground += [np.nan] * (max_len - len(tgBackground))
   # tgNormal += [np.nan] * (max_len - len(tgNormal))
-  
-  botnetDiff[stringDatasetName+'('+selected+')'] = tgBotnet
-  backgroundDiff[stringDatasetName+'('+selected+')'] = tgBackground
-  normalDiff[stringDatasetName+'('+selected+')'] = tgNormal
+  datasetVariableName = stringDatasetName+'('+selected[8:]+')'
+  botnetDiff[datasetVariableName] = tgBotnet
+  backgroundDiff[datasetVariableName] = tgBackground
+  normalDiff[datasetVariableName] = tgNormal
 
   # Create a pandas DataFrame with the two columns
   # df = pd.DataFrame({'botnet':tgBotnet, 'background':tgBackground, 'normal': tgNormal})
