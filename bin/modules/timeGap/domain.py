@@ -11,6 +11,10 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
+botnetDiff = {}
+backgroundDiff = {}
+normalDiff = {}
+
 def flow(datasetName, stringDatasetName, selected):
   ctx='Sequential Pattern Mining for Detection'
   start = watcherStart(ctx)
@@ -31,23 +35,27 @@ def flow(datasetName, stringDatasetName, selected):
   tgBackground = background.loc[background['Diff'] != 0, 'Diff'].values.tolist()
   tgNormal = normal.loc[normal['Diff'] != 0, 'Diff'].values.tolist()
 
-  # Pad the shorter list with NaN values to match the length of the longer list
-  max_len = max(len(tgBotnet), len(tgBackground), len(tgNormal))
-  tgBotnet += [np.nan] * (max_len - len(tgBotnet))
-  tgBackground += [np.nan] * (max_len - len(tgBackground))
-  tgNormal += [np.nan] * (max_len - len(tgNormal))
+  # # Pad the shorter list with NaN values to match the length of the longer list
+  # max_len = max(len(tgBotnet), len(tgBackground), len(tgNormal))
+  # tgBotnet += [np.nan] * (max_len - len(tgBotnet))
+  # tgBackground += [np.nan] * (max_len - len(tgBackground))
+  # tgNormal += [np.nan] * (max_len - len(tgNormal))
+  
+  botnetDiff[stringDatasetName+'('+selected+')'] = tgBotnet
+  backgroundDiff[stringDatasetName+'('+selected+')'] = tgBackground
+  normalDiff[stringDatasetName+'('+selected+')'] = tgNormal
 
   # Create a pandas DataFrame with the two columns
-  df = pd.DataFrame({'botnet':tgBotnet, 'background':tgBackground, 'normal': tgNormal})
+  # df = pd.DataFrame({'botnet':tgBotnet, 'background':tgBackground, 'normal': tgNormal})
 
   # Create a boxplot of the two columns
-  plt.figure()
-  df.boxplot(column=['botnet'], showfliers=False)
-  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-botnet-boxplot.png')
-  df.boxplot(column=['background'], showfliers=False)
-  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-background-boxplot.png')
-  df.boxplot(column=['normal'], showfliers=False)
-  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-normal-boxplot.png')
+  # plt.figure()
+  # df.boxplot(column=['botnet'], showfliers=False)
+  # plt.savefig('collections/'+stringDatasetName+'_'+selected+'-botnet-boxplot.png')
+  # df.boxplot(column=['background'], showfliers=False)
+  # plt.savefig('collections/'+stringDatasetName+'_'+selected+'-background-boxplot.png')
+  # df.boxplot(column=['normal'], showfliers=False)
+  # plt.savefig('collections/'+stringDatasetName+'_'+selected+'-normal-boxplot.png')
 
   # unique, counts = np.unique(botnet['Diff'], return_counts=True)
   # print(unique)
@@ -81,6 +89,16 @@ def flow(datasetName, stringDatasetName, selected):
 
   watcherEnd(ctx, start)
 
+def equateListLength(dct):
+  max_length = max(len(lst) for lst in dct.values())
+  # Pad each list in x with zeros to make them all have the same length
+  for key in dct:
+      lst = dct[key]
+      if len(lst) < max_length:
+          lst += [np.nan] * (max_length - len(lst))
+  
+  return dct
+
 def main():
   for dataset in listAvailableDatasets[:3]:
     print(dataset['name'])
@@ -92,3 +110,22 @@ def main():
   # stringDatasetName = 'ctu'
   # selected = 'scenario7'
   # flow(datasetName, stringDatasetName, selected)
+
+  # Create a boxplot
+  plt.figure()
+  botnetEquateDiff = equateListLength(botnetDiff)
+  botnetDf = pd.DataFrame(botnetEquateDiff)
+  botnetDf.boxplot(showfliers=False)
+  plt.savefig('collections/botnet-boxplot.png')
+
+  plt.figure()
+  backgroundEquateDiff = equateListLength(backgroundDiff)
+  backgroundDf = pd.DataFrame(backgroundEquateDiff)
+  backgroundDf.boxplot(showfliers=False)
+  plt.savefig('collections/background-boxplot.png')
+
+  plt.figure()
+  normalEquateDiff = equateListLength(normalDiff)
+  normalDf = pd.DataFrame(normalEquateDiff)
+  normalDf.boxplot(showfliers=False)
+  plt.savefig('collections/normal-boxplot.png')
