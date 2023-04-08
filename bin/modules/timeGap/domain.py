@@ -15,7 +15,7 @@ botnetDiff = {}
 backgroundDiff = {}
 normalDiff = {}
 
-def flow(datasetName, stringDatasetName, selected):
+def flow(datasetName, stringDatasetName, shortName, selected):
   ctx='Sequential Pattern Mining for Detection'
   start = watcherStart(ctx)
   sequenceOf = 'SrcAddr' #sequence created base on DstAddr / SrcAddr
@@ -40,7 +40,7 @@ def flow(datasetName, stringDatasetName, selected):
   # tgBotnet += [np.nan] * (max_len - len(tgBotnet))
   # tgBackground += [np.nan] * (max_len - len(tgBackground))
   # tgNormal += [np.nan] * (max_len - len(tgNormal))
-  datasetVariableName = stringDatasetName+'('+selected[8:]+')'
+  datasetVariableName = shortName+'('+selected[8:]+')'
   botnetDiff[datasetVariableName] = tgBotnet
   backgroundDiff[datasetVariableName] = tgBackground
   normalDiff[datasetVariableName] = tgNormal
@@ -104,7 +104,7 @@ def main():
     print(dataset['name'])
     for scenario in dataset['list']:
       print(scenario)
-      flow(dataset['list'], dataset['name'], scenario)
+      flow(dataset['list'], dataset['name'], dataset['shortName'], scenario)
 
   # datasetName = ctu
   # stringDatasetName = 'ctu'
