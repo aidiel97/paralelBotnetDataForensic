@@ -36,13 +36,16 @@ def sequenceMiner(datasetDetail, df):
 
   #temp
   df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
-  df = df[df['ActivityLabel'] == 'botnet']
-  print(df)
+  # df = df[df['ActivityLabel'] == 'botnet']
+  # print(df)
   #sequence pattern mining
   for index, row in df.iterrows():
     #set itemset for collection
     # itemset = ( row['DstAddr'], row['NewLabel'] )
     itemset = row['NewLabel']
+    # Concatenate the values of each row with comma-separated values
+    metadata = ','.join([str(val) for val in row.values])
+
   #collect itemset for later support counting
     itemsetData = {
       'itemsetId':stringDatasetName+'('+selected+')-'+str(itemset),
@@ -65,17 +68,17 @@ def sequenceMiner(datasetDetail, df):
           'sid': sid,
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
-          'metadata': [row.to_dict()]
+          'metadata': [metadata]
         })
       elif (row['Diff'] == 0): #while has simultaneous attack
         seq[-1]['itemset'].append(itemset)
-        seq[-1]['metadata'].append(row.to_dict())
+        seq[-1]['metadata'].append(metadata)
       else:
         seq.append({
           'sid': sid,
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
-          'metadata': [row.to_dict()]
+          'metadata': [metadata]
         })
     else:
       existIP = row[sequenceOf]
@@ -84,7 +87,7 @@ def sequenceMiner(datasetDetail, df):
         'sid': sid,
         'srcAddr': row['SrcAddr'],
         'itemset': [itemset],
-        'metadata': [row.to_dict()]
+        'metadata': [metadata]
       })
 
   insertMany(seq, collection)
@@ -133,18 +136,28 @@ def main():
 
   # datasetName, stringDatasetName, selected = datasetMenu.getData()
 
-  datasetName = ctu
-  stringDatasetName = 'ctu'
-  selected = 'scenario7'
-  df = loader.binetflow(datasetName, selected, stringDatasetName)
+  # datasetName = ctu
+  # stringDatasetName = 'ctu'
+  # selected = 'scenario7'
+  # df = loader.binetflow(datasetName, selected, stringDatasetName)
 
-  datasetDetail={
-    'datasetName': datasetName,
-    'stringDatasetName': stringDatasetName,
-    'selected': selected
-  }
-  itemsets = sequenceMiner(datasetDetail, df)
-  supportCounter(datasetDetail, itemsets)
+  for dataset in listAvailableDatasets[:3]:
+    print(dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetName = dataset['list']
+      stringDatasetName = dataset['name']
+      selected = scenario
+
+      df = loader.binetflow(datasetName, selected, stringDatasetName)
+
+      datasetDetail={
+        'datasetName': datasetName,
+        'stringDatasetName': stringDatasetName,
+        'selected': selected
+      }
+      itemsets = sequenceMiner(datasetDetail, df)
+      supportCounter(datasetDetail, itemsets)
 
   watcherEnd(ctx, start)
 
