@@ -28,6 +28,11 @@ def upsertOne(query, record, collectionName=defaultCollection):
   collection.replace_one(query, record, upsert=True)
   # print("Success upsert ", str(query))
 
+def updateOne(query, data, collectionName=defaultCollection):
+  collection = database[collectionName]
+  collection.update_one(query, data)
+  # print("Success upsert ", str(query))
+
 def updateMany(query, record, collectionName=defaultCollection):
   collection = database[collectionName]
   collection.update_many(query, record)
