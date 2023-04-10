@@ -52,8 +52,7 @@ def sequenceMiner(datasetDetail, df):
       'dataset': stringDatasetName,
       'subDataset': selected,
       'itemset': itemset,
-      'support': 0,
-      'metadata': []
+      'support': 0
     }
       #check is data with itemsetId exist in list
     if not any(d.get('itemsetId') == itemsetData['itemsetId'] for d in itemsets):
@@ -124,9 +123,9 @@ def supportCounter(datasetDetail, itemsets):
       'itemset': element['itemset']
     }
     modified = {
-      '$set': {'support': len(support), 'metadata': support}
+      '$set': {'support': len(support)}
     }
-    updateOne(updateQuery,modified, itemsetCollection)
+    updateOne(updateQuery, modified, itemsetCollection)
 
   watcherEnd(ctx, start)
 
