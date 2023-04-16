@@ -93,6 +93,7 @@ def sequenceMiner(datasetDetail, df):
           'meanSeqTotBytes': 0,
           'meanSeqSrcBytes': 0,
           'meanOfCosineSimilarity': 0,
+          'datasetSources':stringDatasetName+'('+selected+')',
         })
       elif (row['Diff'] == 0): #while has simultaneous attack
         seqTotPkts += row['TotPkts']
@@ -128,6 +129,7 @@ def sequenceMiner(datasetDetail, df):
           'meanSeqTotBytes': 0,
           'meanSeqSrcBytes': 0,
           'meanOfCosineSimilarity': 0,
+          'datasetSources':stringDatasetName+'('+selected+')',
         })
     else: #different Source IP make new Sequence, existing sequence finished created
         #calculate mean cosine while existing sequence finished created
@@ -156,6 +158,7 @@ def sequenceMiner(datasetDetail, df):
         'meanSeqTotBytes': 0,
         'meanSeqSrcBytes': 0,
         'meanOfCosineSimilarity': 0,
+        'datasetSources':stringDatasetName+'('+selected+')',
       })
 
   insertMany(seq, collection)
