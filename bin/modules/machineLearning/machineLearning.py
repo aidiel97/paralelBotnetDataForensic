@@ -45,10 +45,11 @@ def classification(x, algorithm='randomForest'):
 def evaluation(ctx, y, predictionResult, algorithm='randomForest'):
   tn, fp, fn, tp = confusion_matrix(y, predictionResult).ravel()
 
-  print('\nTotal input data\t\t\t\t: '+str(y.shape[0]))
-  print('TN (predict result normal, actual normal)\t: '+str(tn))
-  print('FP (predict result bot, actual normal)\t\t: '+str(fp))
-  print('FN (predict result normal, actual bot)\t\t: '+str(fn))
-  print('TP (predict result bot, actual bot)\t\t: '+str(tp))
+  print('\nTotal input data\t\t\t: '+str(y.shape[0]))
+  print('TN (predict result 0, actual 0)\t\t: '+str(tn))
+  print('FP (predict result 1, actual 0)\t\t: '+str(fp))
+  print('FN (predict result 0, actual 1)\t\t: '+str(fn))
+  print('TP (predict result 1, actual 1)\t\t: '+str(tp))
+  print('Accuracy\t\t\t\t: '+str((tp+tn)/(tp+tn+fp+fn)))
 
   csv.classificationResult(ctx, algorithm, tn, fp, fn, tp)

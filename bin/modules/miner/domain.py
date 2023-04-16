@@ -3,6 +3,7 @@ import uuid
 import bin.helpers.utilities.dataLoader as loader
 import bin.modules.preProcessing.transform as preProcessing
 import bin.modules.miner.model as model
+import bin.modules.machineLearning.domain as ml
 import bin.modules.utilities.domain as utilities
 
 from bin.helpers.utilities.watcher import *
@@ -26,8 +27,8 @@ def sequenceMiner(datasetDetail, df):
   df['Diff'] = df['Unix'].diff().apply(lambda x: x if x >= 0 else None)
   df['NewLabel'] = df['Label'].apply(preProcessing.labelProcessing)
 
-  dictLabel = model.main(model.labelModel, df['NewLabel'].unique())
-  upsertmany((list(model.labelModel.keys())[1]),dictLabel,'Label')
+  # dictLabel = model.main(model.labelModel, df['NewLabel'].unique())
+  # upsertmany((list(model.labelModel.keys())[1]),dictLabel,'Label')
 
   seq = [] #in one subDataset has one sequence
   itemsets = []
@@ -69,6 +70,9 @@ def sequenceMiner(datasetDetail, df):
       if(row['Diff'] == None or row['Diff'] > timeGapValue):
         #calculate mean cosine while existing sequence finished created
         seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        seq[-1]['meanSeqTotPkts'] = seq[-1]['seqTotPkts']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqTotBytes'] = seq[-1]['seqTotBytes']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqSrcBytes'] = seq[-1]['seqSrcBytes']/len(seq[-1]['itemset'])
         #calculate mean cosine while existing sequence finished created
 
         sid = str(uuid.uuid4())
@@ -85,6 +89,9 @@ def sequenceMiner(datasetDetail, df):
           'seqTotBytes': seqTotBytes,
           'seqSrcBytes': seqSrcBytes,
           'arrayOfCosine': arrayOfCosine,
+          'meanSeqTotPkts': 0,
+          'meanSeqTotBytes': 0,
+          'meanSeqSrcBytes': 0,
           'meanOfCosineSimilarity': 0,
         })
       elif (row['Diff'] == 0): #while has simultaneous attack
@@ -100,6 +107,9 @@ def sequenceMiner(datasetDetail, df):
       else: #same IP in under time gap
         #calculate mean cosine while existing sequence finished created
         seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        seq[-1]['meanSeqTotPkts'] = seq[-1]['seqTotPkts']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqTotBytes'] = seq[-1]['seqTotBytes']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqSrcBytes'] = seq[-1]['seqSrcBytes']/len(seq[-1]['itemset'])
         #calculate mean cosine while existing sequence finished created
         seqTotPkts = row['TotPkts']
         seqTotBytes = row['TotBytes']
@@ -114,12 +124,18 @@ def sequenceMiner(datasetDetail, df):
           'seqTotBytes': seqTotBytes,
           'seqSrcBytes': seqSrcBytes,
           'arrayOfCosine' : arrayOfCosine,
+          'meanSeqTotPkts': 0,
+          'meanSeqTotBytes': 0,
+          'meanSeqSrcBytes': 0,
           'meanOfCosineSimilarity': 0,
         })
     else: #different Source IP make new Sequence, existing sequence finished created
         #calculate mean cosine while existing sequence finished created
       if(len(seq) > 0):
         seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        seq[-1]['meanSeqTotPkts'] = seq[-1]['seqTotPkts']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqTotBytes'] = seq[-1]['seqTotBytes']/len(seq[-1]['itemset'])
+        seq[-1]['meanSeqSrcBytes'] = seq[-1]['seqSrcBytes']/len(seq[-1]['itemset'])
         #calculate mean cosine while existing sequence finished created
       existIP = row[sequenceOf]
       sid = str(uuid.uuid4())
@@ -136,6 +152,9 @@ def sequenceMiner(datasetDetail, df):
         'seqTotBytes': seqTotBytes,
         'seqSrcBytes': seqSrcBytes,
         'arrayOfCosine' : arrayOfCosine,
+        'meanSeqTotPkts': 0,
+        'meanSeqTotBytes': 0,
+        'meanSeqSrcBytes': 0,
         'meanOfCosineSimilarity': 0,
       })
 
@@ -187,25 +206,29 @@ def supportCounter(datasetDetail, itemsets):
 def main():
   ctx='Sequential Pattern Mining (Main)'
   start = watcherStart(ctx)
-    # with input menu
+    ##### with input menu
   # datasetName, stringDatasetName, selected = datasetMenu.getData()
-    # with input menu
+    ##### with input menu
 
-    #single subDataset
+    ##### single subDataset
   datasetDetail={
     'datasetName': ctu,
     'stringDatasetName': 'ctu',
     'selected': 'scenario7'
   }
-  df = loader.binetflow(
+  raw_df = loader.binetflow(
     datasetDetail['datasetName'],
     datasetDetail['selected'],
     datasetDetail['stringDatasetName'])
-  itemsets = sequenceMiner(datasetDetail, df)
+  df = raw_df.copy() #get a copy from dataset to prevent processed data
+  result = ml.predict(df)
+  raw_df['predictionResult'] = result
+  processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+  itemsets = sequenceMiner(datasetDetail, processed_df)
   supportCounter(datasetDetail, itemsets)
-    #single subDataset
+    ##### single subDataset
 
-    # loop all dataset
+  #   ##### loop all dataset
   # for dataset in listAvailableDatasets[:3]:
   #   print(dataset['name'])
   #   for scenario in dataset['list']:
@@ -220,8 +243,13 @@ def main():
   #       datasetDetail['datasetName'],
   #       datasetDetail['selected'],
   #       datasetDetail['stringDatasetName'])
+  #     df = raw_df.copy() #get a copy from dataset to prevent processed data
+  #     result = ml.predict(df)
+  #     raw_df['predictionResult'] = result
+  #     processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+  #     itemsets = sequenceMiner(datasetDetail, processed_df)
   #     supportCounter(datasetDetail, itemsets)
-    # loop all dataset
+  #   ##### loop all dataset
 
   watcherEnd(ctx, start)
 

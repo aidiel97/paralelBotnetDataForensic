@@ -47,7 +47,6 @@ def main():
     df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
   )]
 
-  
   x_train=train.drop(categorical_features,axis=1)
   x_test=test.drop(categorical_features,axis=1)
   y_train = train['ActivityLabel']
