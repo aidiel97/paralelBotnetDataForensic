@@ -3,6 +3,7 @@ import uuid
 import bin.helpers.utilities.dataLoader as loader
 import bin.modules.preProcessing.transform as preProcessing
 import bin.modules.miner.model as model
+import bin.modules.utilities.domain as utilities
 
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
@@ -33,6 +34,10 @@ def sequenceMiner(datasetDetail, df):
   existIP = ''
   sid = ''
   itemset = ()
+  seqTotPkts = 0
+  seqTotBytes = 0
+  seqSrcBytes = 0
+  arrayOfCosine = []
 
   #temp
   df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
@@ -60,33 +65,78 @@ def sequenceMiner(datasetDetail, df):
       #check is data with itemsetId exist in list
   #collect itemset for later support counting
 
-    if(existIP != '' or existIP == row[sequenceOf]):
+    if(existIP != '' or existIP == row[sequenceOf]): #same Source IP update Sequence
       if(row['Diff'] == None or row['Diff'] > timeGapValue):
+        #calculate mean cosine while existing sequence finished created
+        seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        #calculate mean cosine while existing sequence finished created
+
         sid = str(uuid.uuid4())
+        seqTotPkts = row['TotPkts']
+        seqTotBytes = row['TotBytes']
+        seqSrcBytes = row['SrcBytes']
+        arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
         seq.append({
           'sid': sid,
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
-          'metadata': [metadata]
+          'metadata': [metadata],
+          'seqTotPkts': seqTotPkts,
+          'seqTotBytes': seqTotBytes,
+          'seqSrcBytes': seqSrcBytes,
+          'arrayOfCosine': arrayOfCosine,
+          'meanOfCosineSimilarity': 0,
         })
       elif (row['Diff'] == 0): #while has simultaneous attack
+        seqTotPkts += row['TotPkts']
+        seqTotBytes += row['TotBytes']
+        seqSrcBytes += row['SrcBytes']
+        arrayOfCosine.append([seqTotPkts,seqTotBytes,seqSrcBytes])
+        seq[-1]['seqTotPkts'] = seqTotPkts
+        seq[-1]['seqTotBytes'] = seqTotBytes
+        seq[-1]['seqSrcBytes'] = seqSrcBytes
         seq[-1]['itemset'].append(itemset)
         seq[-1]['metadata'].append(metadata)
-      else:
+      else: #same IP in under time gap
+        #calculate mean cosine while existing sequence finished created
+        seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        #calculate mean cosine while existing sequence finished created
+        seqTotPkts = row['TotPkts']
+        seqTotBytes = row['TotBytes']
+        seqSrcBytes = row['SrcBytes']
+        arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
         seq.append({
           'sid': sid,
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
-          'metadata': [metadata]
+          'metadata': [metadata],
+          'seqTotPkts': seqTotPkts,
+          'seqTotBytes': seqTotBytes,
+          'seqSrcBytes': seqSrcBytes,
+          'arrayOfCosine' : arrayOfCosine,
+          'meanOfCosineSimilarity': 0,
         })
-    else:
+    else: #different Source IP make new Sequence, existing sequence finished created
+        #calculate mean cosine while existing sequence finished created
+      if(len(seq) > 0):
+        seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
+        #calculate mean cosine while existing sequence finished created
       existIP = row[sequenceOf]
       sid = str(uuid.uuid4())
+      seqTotPkts = row['TotPkts']
+      seqTotBytes = row['TotBytes']
+      seqSrcBytes = row['SrcBytes']
+      arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
       seq.append({
         'sid': sid,
         'srcAddr': row['SrcAddr'],
         'itemset': [itemset],
-        'metadata': [metadata]
+        'metadata': [metadata],
+        'seqTotPkts': seqTotPkts,
+        'seqTotBytes': seqTotBytes,
+        'seqSrcBytes': seqSrcBytes,
+        'arrayOfCosine' : arrayOfCosine,
+        'meanOfCosineSimilarity': 0,
       })
 
   insertMany(seq, collection)
@@ -113,7 +163,12 @@ def supportCounter(datasetDetail, itemsets):
           '_id':'$sid',
           'count': {"$sum":1}
         }
-      }
+      },
+      { '$match' :
+        {
+          'count': { '$ne': 1}
+        }
+      },
     ]
     support = aggregate(query,collection)
 
@@ -132,31 +187,41 @@ def supportCounter(datasetDetail, itemsets):
 def main():
   ctx='Sequential Pattern Mining (Main)'
   start = watcherStart(ctx)
-
+    # with input menu
   # datasetName, stringDatasetName, selected = datasetMenu.getData()
+    # with input menu
 
-  # datasetName = ctu
-  # stringDatasetName = 'ctu'
-  # selected = 'scenario7'
-  # df = loader.binetflow(datasetName, selected, stringDatasetName)
+    #single subDataset
+  datasetDetail={
+    'datasetName': ctu,
+    'stringDatasetName': 'ctu',
+    'selected': 'scenario7'
+  }
+  df = loader.binetflow(
+    datasetDetail['datasetName'],
+    datasetDetail['selected'],
+    datasetDetail['stringDatasetName'])
+  itemsets = sequenceMiner(datasetDetail, df)
+  supportCounter(datasetDetail, itemsets)
+    #single subDataset
 
-  for dataset in listAvailableDatasets[:3]:
-    print(dataset['name'])
-    for scenario in dataset['list']:
-      print(scenario)
-      datasetName = dataset['list']
-      stringDatasetName = dataset['name']
-      selected = scenario
+    # loop all dataset
+  # for dataset in listAvailableDatasets[:3]:
+  #   print(dataset['name'])
+  #   for scenario in dataset['list']:
+  #     print(scenario)
+  #     datasetDetail={
+  #       'datasetName': dataset['list'],
+  #       'stringDatasetName': dataset['name'],
+  #       'selected': scenario
+  #     }
 
-      df = loader.binetflow(datasetName, selected, stringDatasetName)
-
-      datasetDetail={
-        'datasetName': datasetName,
-        'stringDatasetName': stringDatasetName,
-        'selected': selected
-      }
-      itemsets = sequenceMiner(datasetDetail, df)
-      supportCounter(datasetDetail, itemsets)
+  #     df = loader.binetflow(
+  #       datasetDetail['datasetName'],
+  #       datasetDetail['selected'],
+  #       datasetDetail['stringDatasetName'])
+  #     supportCounter(datasetDetail, itemsets)
+    # loop all dataset
 
   watcherEnd(ctx, start)
 
