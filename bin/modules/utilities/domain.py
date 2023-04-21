@@ -26,4 +26,4 @@ def meanOfSimilarity(arrays):
     mean_similarity = np.mean(similarities)
     return mean_similarity
   else:
-    return 0.5
+    return 1

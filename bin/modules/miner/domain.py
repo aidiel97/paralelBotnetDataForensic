@@ -9,8 +9,10 @@ import bin.modules.utilities.domain as utilities
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.database import *
+from itertools import combinations
 
 timeGapValue = 80
+seqWidth = 3600
 collection = 'sequences'
 itemsetCollection = 'itemsets'
 sequenceOf = 'SrcAddr' #sequence created base on DstAddr / SrcAddr
@@ -34,6 +36,7 @@ def sequenceMiner(datasetDetail, df):
   itemsets = []
   existIP = ''
   sid = ''
+  seqStartTime = ''
   itemset = ()
   seqTotPkts = 0
   seqTotBytes = 0
@@ -67,7 +70,7 @@ def sequenceMiner(datasetDetail, df):
   #collect itemset for later support counting
 
     if(existIP != '' or existIP == row[sequenceOf]): #same Source IP update Sequence
-      if(row['Diff'] == None or row['Diff'] > timeGapValue):
+      if(row['Diff'] == None or row['Diff'] > timeGapValue or (row['Unix']-seqStartTime) > 3600):
         #calculate mean cosine while existing sequence finished created
         seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
         seq[-1]['meanSeqTotPkts'] = seq[-1]['seqTotPkts']/len(seq[-1]['itemset'])
@@ -76,6 +79,7 @@ def sequenceMiner(datasetDetail, df):
         #calculate mean cosine while existing sequence finished created
 
         sid = str(uuid.uuid4())
+        seqStartTime = row['Unix']
         seqTotPkts = row['TotPkts']
         seqTotBytes = row['TotBytes']
         seqSrcBytes = row['SrcBytes']
@@ -141,6 +145,7 @@ def sequenceMiner(datasetDetail, df):
         #calculate mean cosine while existing sequence finished created
       existIP = row[sequenceOf]
       sid = str(uuid.uuid4())
+      seqStartTime = row['Unix']
       seqTotPkts = row['TotPkts']
       seqTotBytes = row['TotBytes']
       seqSrcBytes = row['SrcBytes']
@@ -206,6 +211,69 @@ def supportCounter(datasetDetail, itemsets):
 
   watcherEnd(ctx, start)
 
+def combination(itemsets):
+  ctx = 'Itemset Combination'
+  start = watcherStart(ctx)
+  resultValue = []
+
+  listOfItemsets = [item["itemset"] for item in itemsets]
+  for length in range(3,8):
+    for comb in combinations(listOfItemsets,length):
+      resultValue.append(list(comb))
+
+  watcherEnd(ctx, start)
+  return resultValue
+
+def countCombinationSupport(datasetDetail, itemsets):
+  ctx='Combination Support Counter'
+  start = watcherStart(ctx)
+  stringDatasetName = datasetDetail['stringDatasetName']
+  selected = datasetDetail['selected']
+  listOfItemset = []
+
+  for element in itemsets:
+    query = [
+      {
+        '$group' : {
+          '_id':'$sid',
+          'count': {'$sum':1},
+          'srcAddr':{"$first":'$srcAddr'},
+          'itemset': {'$push':'$itemset'}
+        }
+      },
+      {
+          '$addFields':{
+              'itemset': {
+                  "$reduce": {
+                    "input": "$itemset",
+                    "initialValue": [],
+                    "in": { "$concatArrays": [ "$$value", "$$this" ] }
+                  }
+              }
+          }
+      },
+      { '$match' :
+        {
+          'count': { '$ne': 1},
+          'itemset': {'$all': element}
+        }
+      },
+    ]
+    support = aggregate(query,collection)
+    if(len(support) > 0):
+      itemsetData = {
+        'itemsetId':stringDatasetName+'('+selected+')-'+str(element),
+        'srcAddr': support[0]['srcAddr'],
+        'dataset': stringDatasetName,
+        'subDataset': selected,
+        'itemset': element,
+        'support': len(support)
+      }
+      listOfItemset.append(itemsetData)
+
+  insertMany(listOfItemset, itemsetCollection)
+  watcherEnd(ctx, start)
+
 def main():
   ctx='Sequential Pattern Mining (Main)'
   start = watcherStart(ctx)
@@ -217,7 +285,7 @@ def main():
   datasetDetail={
     'datasetName': ctu,
     'stringDatasetName': 'ctu',
-    'selected': 'scenario7'
+    'selected': 'scenario6'
   }
   raw_df = loader.binetflow(
     datasetDetail['datasetName'],
@@ -229,6 +297,8 @@ def main():
   processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
   itemsets = sequenceMiner(datasetDetail, processed_df)
   supportCounter(datasetDetail, itemsets)
+  combinationItem = combination(itemsets)
+  countCombinationSupport(datasetDetail, combinationItem)
     ##### single subDataset
 
   #   ##### loop all dataset
