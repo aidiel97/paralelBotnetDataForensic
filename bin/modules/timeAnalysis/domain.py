@@ -4,6 +4,7 @@ import bin.modules.preProcessing.transform as preProcessing
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.csvGenerator import exportWithObject
+from datetime import datetime
 
 import pandas as pd
 import os
@@ -16,7 +17,7 @@ backgroundDiff = {}
 normalDiff = {}
 
 def flow(datasetName, stringDatasetName, shortName, selected):
-  ctx='Sequential Pattern Mining for Detection'
+  ctx='Time Gap Analysis with Statistical Approach'
   start = watcherStart(ctx)
   sequenceOf = 'SrcAddr' #sequence created base on DstAddr / SrcAddr
 
@@ -99,7 +100,7 @@ def equateListLength(dct):
   
   return dct
 
-def main():
+def timeGap():
   for dataset in listAvailableDatasets[:3]:
     print(dataset['name'])
     for scenario in dataset['list']:
@@ -138,3 +139,64 @@ def main():
   # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
   plt.subplots_adjust(bottom=0.25)
   plt.savefig('collections/normal-boxplot.png')
+
+def segmentation(datasetDetail):
+  ctx='Segmenting Dataset by Time'
+  start = watcherStart(ctx)
+  datasetName = datasetDetail['datasetName']
+  stringDatasetName = datasetDetail['stringDatasetName']
+  selected = datasetDetail['selected']
+
+  df = loader.binetflow(datasetName, selected, stringDatasetName)
+  df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
+  df = df.sort_values(by=['Unix'])
+  df['Segment'] = df['Unix'].apply(preProcessing.defineSegment).fillna(0)
+
+  srcAddr = df.SrcAddr.unique()
+  plotDataMatrix = []
+  for address in srcAddr:
+    addressData = []
+    for segment in df.Segment.unique():
+      addressData.append(len(df[(df.Segment == segment) & (df.SrcAddr == address)]))
+    plotDataMatrix.append(addressData)
+
+  data = np.array(plotDataMatrix)
+  plt.plot(data.T)
+  plt.xlabel('Segment')
+  plt.ylabel('Count')
+  plt.title('Line Plot')
+  plt.legend(srcAddr)
+  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-linePlot.png')
+
+  watcherEnd(ctx, start)
+
+def segmentAnalysis():
+  ctx='Dataset Time Segment Analysis'
+  start = watcherStart(ctx)
+    ##### with input menu
+  # datasetName, stringDatasetName, selected = datasetMenu.getData()
+    ##### with input menu
+
+    ##### with looping all Dataset
+  # for dataset in listAvailableDatasets[:3]:
+  #   print(dataset['name'])
+  #   for scenario in dataset['list']:
+  #     print(scenario)
+  #     datasetDetail={
+  #       'datasetName': dataset['list'],
+  #       'stringDatasetName': dataset['shortName'],
+  #       'selected': scenario
+  #     }
+  #     segmentation(datasetDetail)
+  #   ##### with looping all Dataset
+    
+    ##### single subDataset
+  datasetDetail = datasetDetail={
+    'datasetName': ctu,
+    'stringDatasetName': 'ctu',
+    'selected': 'scenario4'
+  }
+  segmentation(datasetDetail)
+    ##### single subDataset
+
+  watcherEnd(ctx, start)

@@ -8,6 +8,9 @@ from datetime import datetime
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 
+def defineSegment(unixTime):
+  return datetime.fromtimestamp(unixTime).hour
+
 def ipToInteger(ip):
   try:
     packedIP = socket.inet_aton(ip)

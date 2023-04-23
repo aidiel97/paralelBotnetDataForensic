@@ -25,7 +25,8 @@ def sequenceMiner(datasetDetail, df):
   selected = datasetDetail['selected']
 
   df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
-  df = df.sort_values(by=[sequenceOf, 'StartTime'])
+  df = df.sort_values(by=[sequenceOf, 'Unix'])
+  df['Segment'] = df['Unix'].apply(preProcessing.defineSegment).fillna(0)
   df['Diff'] = df['Unix'].diff().apply(lambda x: x if x >= 0 else None)
   df['NewLabel'] = df['Label'].apply(preProcessing.labelProcessing)
 
@@ -35,8 +36,8 @@ def sequenceMiner(datasetDetail, df):
   seq = [] #in one subDataset has one sequence
   itemsets = []
   existIP = ''
+  existSegment = ''
   sid = ''
-  seqStartTime = ''
   itemset = ()
   seqTotPkts = 0
   seqTotBytes = 0
@@ -55,7 +56,7 @@ def sequenceMiner(datasetDetail, df):
     # Concatenate the values of each row with comma-separated values
     metadata = ','.join([str(val) for val in row.values])
 
-  #collect itemset for later support counting
+    #######collect itemset for later support counting
     itemsetData = {
       'itemsetId':stringDatasetName+'('+selected+')-'+str(itemset),
       'dataset': stringDatasetName,
@@ -67,10 +68,14 @@ def sequenceMiner(datasetDetail, df):
     if not any(d.get('itemsetId') == itemsetData['itemsetId'] for d in itemsets):
       itemsets.append(itemsetData)
       #check is data with itemsetId exist in list
-  #collect itemset for later support counting
+    #######collect itemset for later support counting
 
     if(existIP != '' or existIP == row[sequenceOf]): #same Source IP update Sequence
-      if(row['Diff'] == None or row['Diff'] > timeGapValue or (row['Unix']-seqStartTime) > 3600):
+      if(
+        row['Diff'] == None
+          or row['Diff'] > timeGapValue
+            or row['Segment'] != existSegment
+        ):
         #calculate mean cosine while existing sequence finished created
         seq[-1]['meanOfCosineSimilarity'] = utilities.meanOfSimilarity(seq[-1]['arrayOfCosine'])
         seq[-1]['meanSeqTotPkts'] = seq[-1]['seqTotPkts']/len(seq[-1]['itemset'])
@@ -86,6 +91,7 @@ def sequenceMiner(datasetDetail, df):
         arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
         seq.append({
           'sid': sid,
+          'segment': row['Segment'],
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
           'metadata': [metadata],
@@ -122,6 +128,7 @@ def sequenceMiner(datasetDetail, df):
         arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
         seq.append({
           'sid': sid,
+          'segment': row['Segment'],
           'srcAddr': row['SrcAddr'],
           'itemset': [itemset],
           'metadata': [metadata],
@@ -143,7 +150,6 @@ def sequenceMiner(datasetDetail, df):
         seq[-1]['meanSeqTotBytes'] = seq[-1]['seqTotBytes']/len(seq[-1]['itemset'])
         seq[-1]['meanSeqSrcBytes'] = seq[-1]['seqSrcBytes']/len(seq[-1]['itemset'])
         #calculate mean cosine while existing sequence finished created
-      existIP = row[sequenceOf]
       sid = str(uuid.uuid4())
       seqStartTime = row['Unix']
       seqTotPkts = row['TotPkts']
@@ -152,6 +158,7 @@ def sequenceMiner(datasetDetail, df):
       arrayOfCosine = [[seqTotPkts,seqTotBytes,seqSrcBytes]]
       seq.append({
         'sid': sid,
+        'segment': row['Segment'],
         'srcAddr': row['SrcAddr'],
         'itemset': [itemset],
         'metadata': [metadata],
@@ -165,6 +172,10 @@ def sequenceMiner(datasetDetail, df):
         'meanOfCosineSimilarity': 0,
         'datasetSources':stringDatasetName+'('+selected+')',
       })
+    
+    #in the end of loop
+    existIP = row[sequenceOf]
+    existSegment = row['Segment']
 
   insertMany(seq, collection)
   insertMany(itemsets, itemsetCollection)
@@ -285,17 +296,18 @@ def main():
   datasetDetail={
     'datasetName': ctu,
     'stringDatasetName': 'ctu',
-    'selected': 'scenario6'
+    'selected': 'scenario11'
   }
   raw_df = loader.binetflow(
     datasetDetail['datasetName'],
     datasetDetail['selected'],
     datasetDetail['stringDatasetName'])
   df = raw_df.copy() #get a copy from dataset to prevent processed data
-  result = ml.predict(df)
-  raw_df['predictionResult'] = result
-  processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
-  itemsets = sequenceMiner(datasetDetail, processed_df)
+  # result = ml.predict(df)
+  # raw_df['predictionResult'] = result
+  # processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+  # itemsets = sequenceMiner(datasetDetail, processed_df)
+  itemsets = sequenceMiner(datasetDetail, df) #no ML
   supportCounter(datasetDetail, itemsets)
   combinationItem = combination(itemsets)
   countCombinationSupport(datasetDetail, combinationItem)
