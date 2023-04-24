@@ -25,8 +25,8 @@ def sequenceMiner(datasetDetail, df):
   selected = datasetDetail['selected']
 
   df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
-  df = df.sort_values(by=[sequenceOf, 'Unix'])
   df['Segment'] = df['Unix'].apply(preProcessing.defineSegment).fillna(0)
+  df = df.sort_values(by=['Segment', sequenceOf, 'Unix'])
   df['Diff'] = df['Unix'].diff().apply(lambda x: x if x >= 0 else None)
   df['NewLabel'] = df['Label'].apply(preProcessing.labelProcessing)
 
@@ -62,7 +62,8 @@ def sequenceMiner(datasetDetail, df):
       'dataset': stringDatasetName,
       'subDataset': selected,
       'itemset': itemset,
-      'support': 0
+      'support': 0,
+      'segment': row['Segment']
     }
       #check is data with itemsetId exist in list
     if not any(d.get('itemsetId') == itemsetData['itemsetId'] for d in itemsets):
@@ -181,9 +182,9 @@ def sequenceMiner(datasetDetail, df):
   insertMany(itemsets, itemsetCollection)
   
   watcherEnd(ctx, start)
-  return itemsets
+  return itemsets, len(df['Segment'].unique())
 
-def supportCounter(datasetDetail, itemsets):
+def supportCounter(datasetDetail, itemsets, segment):
   ctx='Support Counter'
   start = watcherStart(ctx)
   stringDatasetName = datasetDetail['stringDatasetName']
@@ -193,7 +194,8 @@ def supportCounter(datasetDetail, itemsets):
     query = [
       { '$match' :
         {
-          'itemset': element['itemset']
+          'itemset': element['itemset'],
+          'segment' : segment
         }
       },
       {
@@ -213,21 +215,22 @@ def supportCounter(datasetDetail, itemsets):
     updateQuery = {
       'dataset': stringDatasetName,
       'subDataset': selected,
-      'itemset': element['itemset']
+      'itemset': element['itemset'],
+      'segment': segment
     }
     modified = {
-      '$set': {'support': len(support)}
+      '$set': { 'support': len(support) }
     }
     updateOne(updateQuery, modified, itemsetCollection)
 
   watcherEnd(ctx, start)
 
-def combination(itemsets):
+def combination(itemsets, segment):
   ctx = 'Itemset Combination'
   start = watcherStart(ctx)
   resultValue = []
 
-  listOfItemsets = [item["itemset"] for item in itemsets]
+  listOfItemsets = [item["itemset"] for item in itemsets if item['segment'] == segment]
   for length in range(3,8):
     for comb in combinations(listOfItemsets,length):
       resultValue.append(list(comb))
@@ -235,7 +238,7 @@ def combination(itemsets):
   watcherEnd(ctx, start)
   return resultValue
 
-def countCombinationSupport(datasetDetail, itemsets):
+def countCombinationSupport(datasetDetail, itemsets, segment):
   ctx='Combination Support Counter'
   start = watcherStart(ctx)
   stringDatasetName = datasetDetail['stringDatasetName']
@@ -244,6 +247,12 @@ def countCombinationSupport(datasetDetail, itemsets):
 
   for element in itemsets:
     query = [
+      {
+        '$match': {
+          'segment' : segment,
+          'support' : { '$gt': 2 }
+        }
+      },
       {
         '$group' : {
           '_id':'$sid',
@@ -277,12 +286,57 @@ def countCombinationSupport(datasetDetail, itemsets):
         'srcAddr': support[0]['srcAddr'],
         'dataset': stringDatasetName,
         'subDataset': selected,
-        'itemset': element,
+        'itemset': str(element),
         'support': len(support)
       }
       listOfItemset.append(itemsetData)
 
-  insertMany(listOfItemset, itemsetCollection)
+  if(len(listOfItemset) > 0):
+    insertMany(listOfItemset, itemsetCollection)
+  watcherEnd(ctx, start)
+
+def segmentTraffic(datasetDetail, itemsets, segment):
+  ctx='Segement Traffic Analysis'
+  start = watcherStart(ctx)
+  stringDatasetName = datasetDetail['stringDatasetName']
+  selected = datasetDetail['selected']
+  listOfItemset = []
+
+  ##get 20 most intense src address
+  query = [
+    {
+      '$match': {
+        'segment' : segment,
+        'support' : { '$gt': 2 }
+      }
+    },
+    {
+      '$group' : {
+        '_id':'$sid',
+        'count': {'$sum':1},
+        'srcAddr':{"$first":'$srcAddr'},
+        'itemset': {'$push':'$itemset'}
+      }
+    },
+    {
+        '$addFields':{
+            'itemset': {
+                "$reduce": {
+                  "input": "$itemset",
+                  "initialValue": [],
+                  "in": { "$concatArrays": [ "$$value", "$$this" ] }
+                }
+            }
+        }
+    },
+    { '$match' :
+      {
+        'count': { '$ne': 1},
+        'itemset': {'$all': element}
+      }
+    },
+  ]
+  support = aggregate(query,collection)
   watcherEnd(ctx, start)
 
 def main():
@@ -294,9 +348,9 @@ def main():
 
     ##### single subDataset
   datasetDetail={
-    'datasetName': ctu,
-    'stringDatasetName': 'ctu',
-    'selected': 'scenario11'
+    'datasetName': ncc,
+    'stringDatasetName': 'ncc',
+    'selected': 'scenario7'
   }
   raw_df = loader.binetflow(
     datasetDetail['datasetName'],
@@ -306,11 +360,12 @@ def main():
   # result = ml.predict(df)
   # raw_df['predictionResult'] = result
   # processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
-  # itemsets = sequenceMiner(datasetDetail, processed_df)
-  itemsets = sequenceMiner(datasetDetail, df) #no ML
-  supportCounter(datasetDetail, itemsets)
-  combinationItem = combination(itemsets)
-  countCombinationSupport(datasetDetail, combinationItem)
+  # itemsets, segmentLen = sequenceMiner(datasetDetail, processed_df)
+  itemsets, segmentLen = sequenceMiner(datasetDetail, df) #no ML
+  # for segment in range(segmentLen):
+  #   supportCounter(datasetDetail, itemsets, segment)
+  #   combinationItem = combination(itemsets, segment)
+  #   countCombinationSupport(datasetDetail, combinationItem, segment)
     ##### single subDataset
 
   #   ##### loop all dataset
