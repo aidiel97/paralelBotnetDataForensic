@@ -34,7 +34,7 @@ def preProcessingModule(df):
   return df
 
 def predict(df):
-  ctx = 'Predict'
+  ctx = 'Machine Learning Classification'
   start = watcherStart(ctx)
 
   df = preProcessingModule(df) # pre-processing
@@ -48,10 +48,6 @@ def predict(df):
   
   watcherEnd(ctx, start)
   return predictionResult
-
-# def filtering(raw_df, selected, predictionResult):
-
-
 
 def modellingWithCTU():
   ctx = 'Modelling with CTU dataset'

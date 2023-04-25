@@ -42,7 +42,7 @@ def withDataframe(df):
     df.loc[index, 'SequenceId'] = sid
   
   watcherEnd(ctx, start)
-  return [], math.ceil((datasetEndAt-datasetStartAt)/3600), df
+  return df
 
 def withMongo(datasetDetail, df):
   ctx='Sequential Pattern Miner (With Mongo)'
@@ -211,4 +211,4 @@ def withMongo(datasetDetail, df):
   insertMany(itemsets, itemsetCollection)
   
   watcherEnd(ctx, start)
-  return itemsets, math.ceil((datasetEndAt-datasetStartAt)/3600), df
+  return df

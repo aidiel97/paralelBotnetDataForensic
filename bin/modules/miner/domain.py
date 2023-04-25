@@ -30,9 +30,38 @@ def unique(list1):
   unique_list = (list(list_set))
   return unique_list
 
-def evaluate(df, predicted_df):
-  ctx='Evaluation'
+def packetAnalysis(df, SrcBytesThreshold, SrcBytesCVThreshold):
+  ctx='Method Evaluation'
   start = watcherStart(ctx)
+
+  cv = lambda x: np.std(x) / np.mean(x)*100 #coefficient of variation (CV)
+  sumOf = lambda x: np.sum(x)
+
+  df['elementsInSequence'] = df.groupby('SequenceId')['SequenceId'].transform('count')
+  df = df[df['elementsInSequence'] > 1 ]
+  df['SrcBytesCV'] = df.groupby('SequenceId')['SrcBytes'].transform(cv)
+  df['SrcBytesSeq'] = df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
+  df['TotBytesCV'] = df.groupby('SequenceId')['TotBytes'].transform(cv)
+  df['TotBytesSeq'] = df.groupby('SequenceId')['TotBytes'].transform(sumOf)
+  df['TotPktsCV'] = df.groupby('SequenceId')['TotPkts'].transform(cv)
+  df['TotPktsSeq'] = df.groupby('SequenceId')['TotPkts'].transform(sumOf)
+  df = df[df['SrcBytesCV'] <= SrcBytesCVThreshold ]
+  df = df[df['SrcBytesSeq'] > SrcBytesThreshold]
+
+  watcherEnd(ctx, start)
+  return df
+
+def methodEvaluation(dataset, actual_df, predicted_df):
+  ctx='Method Evaluation'
+  start = watcherStart(ctx)
+  addressPredictedAsBotnet = predicted_df['SrcAddr'].unique()
+
+  actual_df['ActualClass'] = actual_df['Label'].str.contains('botnet', case=False, regex=True)
+  result_df = actual_df.groupby('SrcAddr')['ActualClass'].apply(lambda x: x.mode()[0]).reset_index()
+  result_df.columns = ['SrcAddr','ActualClass']
+  result_df['PredictedClass'] = result_df['SrcAddr'].isin(addressPredictedAsBotnet)
+
+  mlTools.evaluation(dataset, result_df['ActualClass'], result_df['PredictedClass'], 'Proposed Sequence Pattern Miner')
 
   watcherEnd(ctx, start)
 
@@ -53,54 +82,22 @@ def main():
     datasetDetail['datasetName'],
     datasetDetail['selected'],
     datasetDetail['stringDatasetName'])
-  print(raw_df.shape)
+
   df = raw_df.copy() #get a copy from dataset to prevent processed data
   result = ml.predict(df)
   raw_df['predictionResult'] = result
-  processed_df = raw_df[~raw_df['Dport'].isin(commonPorts)]
-  print(processed_df.shape)
-  processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)]
-  print(processed_df.shape)
+  processed_df = raw_df[~raw_df['Dport'].isin(commonPorts)] #filter traffic use common ports
+  processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)] #filter traffic use common ports
   processed_df = processed_df[processed_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
-  print(processed_df.shape)
 
-  # itemsets, segmentLen, new_df = tools.withMongo(datasetDetail, processed_df)
-  itemsets, segmentLen, new_df = tools.withDataframe(processed_df)
-  print(new_df.info())
-  print(new_df)
+  # new_df = tools.withMongo(datasetDetail, processed_df)
+  new_df = tools.withDataframe(processed_df)
+  SrcBytesThreshold = raw_df['SrcBytes'].mean()
+  SrcBytesCVThreshold = 75
+  new_df = packetAnalysis(new_df, SrcBytesThreshold, SrcBytesCVThreshold)
+  datasetName = datasetDetail.stringDatasetName+'-'+datasetDetail.selected
+  methodEvaluation(datasetName, raw_df, new_df)
 
-  new_df['elementsInSequence'] = new_df.groupby('SequenceId')['SequenceId'].transform('count')
-  new_df = new_df[new_df['elementsInSequence'] > 1 ]
-  print(new_df.shape)
-
-  cv = lambda x: np.std(x) / np.mean(x)*100
-  sumOf = lambda x: np.sum(x)
-  new_df['SrcBytesCV'] = new_df.groupby('SequenceId')['SrcBytes'].transform(cv)
-  new_df['SrcBytesSeq'] = new_df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
-  new_df['TotBytesCV'] = new_df.groupby('SequenceId')['TotBytes'].transform(cv)
-  new_df['TotBytesSeq'] = new_df.groupby('SequenceId')['TotBytes'].transform(sumOf)
-  new_df['TotPktsCV'] = new_df.groupby('SequenceId')['TotPkts'].transform(cv)
-  new_df['TotPktsSeq'] = new_df.groupby('SequenceId')['TotPkts'].transform(sumOf)
-
-  print(new_df.info())
-  print(new_df[['SrcAddr','SequenceId','SrcBytes','SrcBytesCV','TotBytesCV','TotPktsCV']])
-
-  new_df = new_df[new_df['SrcBytesCV'] <= 75 ] #only export suspect (while CV more than 100%)
-  new_df = new_df[new_df['SrcBytesSeq'] > raw_df['SrcBytes'].mean()]
-  addressPredictedAsBotnet = new_df['SrcAddr'].unique()
-
-  print(new_df[['SrcBytes','TotPkts','TotBytes']].describe())
-
-  raw_df['ActualClass'] = raw_df['Label'].str.contains('botnet', case=False, regex=True)
-  result_df = raw_df.groupby('SrcAddr')['ActualClass'].apply(lambda x: x.mode()[0]).reset_index()
-  result_df.columns = ['SrcAddr','ActualClass']
-  result_df['PredictedClass'] = result_df['SrcAddr'].isin(addressPredictedAsBotnet)
-  mlTools.evaluation(ctx, result_df['ActualClass'], result_df['PredictedClass'], 'Proposed Sequence Pattern Miner')
-  result_df.to_csv('collections/detection.csv')
-  print(result_df)
-
-  
-  
   # for segment in range(segmentLen):
   #   supportCounter(datasetDetail, itemsets, segment)
   #   combinationItem = combination(itemsets, segment)
