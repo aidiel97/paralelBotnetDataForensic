@@ -66,23 +66,24 @@ def methodEvaluation(dataset, actual_df, predicted_df):
   watcherEnd(ctx, start)
 
 def main():
-  ctx='Sequential Pattern Mining (Main)'
+  ctx='Sequential Pattern Mining (Main) - Single Dataset'
   start = watcherStart(ctx)
-    ##### with input menu
-  # datasetName, stringDatasetName, selected = datasetMenu.getData()
-    ##### with input menu
-
-    ##### single subDataset
+  ##### single subDataset
   datasetDetail={
     'datasetName': ctu,
     'stringDatasetName': 'ctu',
     'selected': 'scenario4'
   }
+  ##### with input menu
+  # datasetName, stringDatasetName, selected = datasetMenu.getData()
+  ##### with input menu
   raw_df = loader.binetflow(
     datasetDetail['datasetName'],
     datasetDetail['selected'],
     datasetDetail['stringDatasetName'])
 
+  print('\n'+datasetDetail['stringDatasetName'])
+  print(datasetDetail['selected'])
   df = raw_df.copy() #get a copy from dataset to prevent processed data
   result = ml.predict(df)
   raw_df['predictionResult'] = result
@@ -90,41 +91,50 @@ def main():
   processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)] #filter traffic use common ports
   processed_df = processed_df[processed_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
 
-  # new_df = tools.withMongo(datasetDetail, processed_df)
   new_df = tools.withDataframe(processed_df)
   SrcBytesThreshold = raw_df['SrcBytes'].mean()
   SrcBytesCVThreshold = 75
   new_df = packetAnalysis(new_df, SrcBytesThreshold, SrcBytesCVThreshold)
-  datasetName = datasetDetail.stringDatasetName+'-'+datasetDetail.selected
+  datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
   methodEvaluation(datasetName, raw_df, new_df)
+  ##### single subDataset
 
-  # for segment in range(segmentLen):
-  #   supportCounter(datasetDetail, itemsets, segment)
-  #   combinationItem = combination(itemsets, segment)
-  #   countCombinationSupport(datasetDetail, combinationItem, segment)
-    ##### single subDataset
+  watcherEnd(ctx, start)
 
-  #   ##### loop all dataset
-  # for dataset in listAvailableDatasets[:3]:
-  #   print(dataset['name'])
-  #   for scenario in dataset['list']:
-  #     print(scenario)
-  #     datasetDetail={
-  #       'datasetName': dataset['list'],
-  #       'stringDatasetName': dataset['name'],
-  #       'selected': scenario
-  #     }
 
-  #     df = loader.binetflow(
-  #       datasetDetail['datasetName'],
-  #       datasetDetail['selected'],
-  #       datasetDetail['stringDatasetName'])
-  #     df = raw_df.copy() #get a copy from dataset to prevent processed data
-  #     result = ml.predict(df)
-  #     raw_df['predictionResult'] = result
-  #     processed_df = raw_df[raw_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
-  #     itemsets = sequenceMiner(datasetDetail, processed_df)
-  #     supportCounter(datasetDetail, itemsets)
-  #   ##### loop all dataset
+def executeAllData():
+  ctx='Sequential Pattern Mining (Main) - Execute All Data'
+  start = watcherStart(ctx)
+
+  ##### loop all dataset
+  for dataset in listAvailableDatasets[:3]:
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
+
+      raw_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+
+      df = raw_df.copy() #get a copy from dataset to prevent processed data
+      result = ml.predict(df)
+      raw_df['predictionResult'] = result
+      processed_df = raw_df[~raw_df['Dport'].isin(commonPorts)] #filter traffic use common ports
+      processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)] #filter traffic use common ports
+      processed_df = processed_df[processed_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+
+      new_df = tools.withDataframe(processed_df)
+      SrcBytesThreshold = raw_df['SrcBytes'].mean()
+      SrcBytesCVThreshold = 75
+      new_df = packetAnalysis(new_df, SrcBytesThreshold, SrcBytesCVThreshold)
+      datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
+      methodEvaluation(datasetName, raw_df, new_df)
+  ##### loop all dataset
 
   watcherEnd(ctx, start)

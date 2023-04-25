@@ -51,5 +51,7 @@ def evaluation(ctx, y, predictionResult, algorithm='randomForest'):
   print('FN (predict result 0, actual 1)\t\t: '+str(fn))
   print('TP (predict result 1, actual 1)\t\t: '+str(tp))
   print('Accuracy\t\t\t\t: '+str((tp+tn)/(tp+tn+fp+fn)))
+  print('TPR\t\t\t\t\t: '+str((tp)/(tp+fn)))
+  print('TNR\t\t\t\t\t: '+str((tn)/(tn+fp)))
 
   csv.classificationResult(ctx, algorithm, tn, fp, fn, tp)
