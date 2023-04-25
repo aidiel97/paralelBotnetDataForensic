@@ -19,9 +19,10 @@ def insertOne(dictData, collectionName=defaultCollection):
   # print("success insert with id: "+str(row.inserted_id))
 
 def insertMany(listData, collectionName=defaultCollection):
+  print("\t..Starting insertMany to "+collectionName)
   collection = database[collectionName]
   row = collection.insert_many(listData)
-  # print("\t..Success insert into "+collectionName)
+  print("\t..Success insertMany to "+collectionName)
 
 def upsertOne(query, record, collectionName=defaultCollection):
   collection = database[collectionName]
@@ -34,9 +35,10 @@ def updateOne(query, data, collectionName=defaultCollection):
   # print("Success upsert ", str(query))
 
 def updateMany(query, record, collectionName=defaultCollection):
+  print("\t..Starting updateMany")
   collection = database[collectionName]
   collection.update_many(query, record)
-  # print("\t..Success updateMany")
+  print("\t..Success updateMany")
 
 def deleteOne(query, collectionName=defaultCollection):
   collection = database[collectionName]
@@ -44,11 +46,13 @@ def deleteOne(query, collectionName=defaultCollection):
   print("\t..Success delete one", str(query))
 
 def deleteMany(query, collectionName=defaultCollection):
+  print("\t..Starting delete many ", str(query))
   collection = database[collectionName]
   collection.delete_many(query)
   print("\t..Success delete many ", str(query))
 
 def upsertmany(id, data, collectionName=defaultCollection):
+  print("Starting Upsert many")
   collection = database[collectionName]
   upsert = []
   for element in data:
