@@ -3,7 +3,8 @@ import bin.modules.preProcessing.transform as transform
 import bin.modules.preProcessing.handlingNull as null
 import bin.modules.preProcessing.cleansing as cleansing
 import bin.modules.machineLearning.machineLearning as ml
-from bin.modules.miner.domain import methodEvaluation
+import bin.modules.miner.domain as miner
+
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 
@@ -89,7 +90,7 @@ def executeAllData():
   ctx='Machine learning Classification - Execute All Data'
   start = watcherStart(ctx)
 
-  for algo in list(ml.algorithmDict.values):
+  for algo in list(ml.algorithmDict.keys()):
     modellingWithCTU(algo)
   ##### loop all dataset
     for dataset in listAvailableDatasets[:3]:
@@ -113,7 +114,7 @@ def executeAllData():
         new_df = df[df['predictionResult'] == 0]
         
         datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-        methodEvaluation(datasetName, raw_df, new_df, algo)
+        miner.methodEvaluation(datasetName, raw_df, new_df, algo)
   ##### loop all dataset
 
   watcherEnd(ctx, start)
