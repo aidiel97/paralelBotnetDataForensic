@@ -14,7 +14,8 @@ import bin.modules.machineLearning.domain as ml
 if __name__ == "__main__":
   listMenu = [
     ('Generate Machine Learning Models', ml.modellingWithCTU),
-    ('Sequential Pattern Mining for Detection', miner.main),
+    ('Test Machine Learning Models', ml.executeAllData),
+    ('[Single Dataset] Sequential Pattern Mining for Detection', miner.main),
     ('[Test All Dataset] Sequential Pattern Mining for Detection', miner.executeAllData),
     ('Sensor Based Causality Analysis', sbp.main),
     ('Sequence Pattern Mining for Detection', spm4d.main),

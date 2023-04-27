@@ -3,6 +3,7 @@ import bin.modules.preProcessing.transform as transform
 import bin.modules.preProcessing.handlingNull as null
 import bin.modules.preProcessing.cleansing as cleansing
 import bin.modules.machineLearning.machineLearning as ml
+from bin.modules.miner.domain import methodEvaluation
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 
@@ -10,7 +11,7 @@ import pandas as pd
 
 def preProcessingModule(df):
   #make new label for background prediciton(1/0)
-  df['ActivityLabel'] = df['Label'].str.contains('background', case=False, regex=True).astype(int)
+  df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
   #make new label for background prediciton(1/0)
 
   #transform with dictionary
@@ -33,7 +34,7 @@ def preProcessingModule(df):
   
   return df
 
-def predict(df):
+def predict(df, algorithm='randomForest'):
   ctx = 'Machine Learning Classification'
   start = watcherStart(ctx)
 
@@ -43,13 +44,13 @@ def predict(df):
   )]
   x = df.drop(categorical_features,axis=1)
   y = df['ActivityLabel']
-  predictionResult = ml.classification(x)
-  ml.evaluation(ctx, y, predictionResult)
+  predictionResult = ml.classification(x, algorithm)
+  ml.evaluation(ctx, y, predictionResult, algorithm)
   
   watcherEnd(ctx, start)
   return predictionResult
 
-def modellingWithCTU():
+def modellingWithCTU(algorithm='randomForest'):
   ctx = 'Modelling with CTU dataset'
   start = watcherStart(ctx)
 
@@ -71,7 +72,7 @@ def modellingWithCTU():
   )]
   x = df.drop(categorical_features,axis=1)
   y = df['ActivityLabel']
-  ml.modelling(x, y)
+  ml.modelling(x, y, algorithm)
   #modelling
 
   #evaluate
@@ -79,7 +80,40 @@ def modellingWithCTU():
   stringDatasetName = 'ctu'
   selected = 'scenario7'
   test_df = loader.binetflow(datasetName, selected, stringDatasetName)
-  predict(test_df)
+  predict(test_df, algorithm)
   #evaluate
+
+  watcherEnd(ctx, start)
+
+def executeAllData():
+  ctx='Machine learning Classification - Execute All Data'
+  start = watcherStart(ctx)
+
+  for algo in list(ml.algorithmDict.values):
+    modellingWithCTU(algo)
+  ##### loop all dataset
+    for dataset in listAvailableDatasets[:3]:
+      print('\n'+dataset['name'])
+      for scenario in dataset['list']:
+        print(scenario)
+        datasetDetail={
+          'datasetName': dataset['list'],
+          'stringDatasetName': dataset['name'],
+          'selected': scenario
+        }
+
+        raw_df = loader.binetflow(
+          datasetDetail['datasetName'],
+          datasetDetail['selected'],
+          datasetDetail['stringDatasetName'])
+
+        df = raw_df.copy() #get a copy from dataset to prevent processed data
+        result = predict(df, algo)
+        df['predictionResult'] = result
+        new_df = df[df['predictionResult'] == 0]
+        
+        datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
+        methodEvaluation(datasetName, raw_df, new_df, algo)
+  ##### loop all dataset
 
   watcherEnd(ctx, start)

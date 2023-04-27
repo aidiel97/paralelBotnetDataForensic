@@ -30,28 +30,30 @@ def unique(list1):
   unique_list = (list(list_set))
   return unique_list
 
-def packetAnalysis(df, SrcBytesThreshold, SrcBytesCVThreshold):
+def packetAnalysis(df):
   ctx='Method Evaluation'
   start = watcherStart(ctx)
+  SrcBytesThreshold = df['SrcBytes'].mean()
 
   cv = lambda x: np.std(x) / np.mean(x)*100 #coefficient of variation (CV)
   sumOf = lambda x: np.sum(x)
 
   df['elementsInSequence'] = df.groupby('SequenceId')['SequenceId'].transform('count')
-  df = df[df['elementsInSequence'] > 1 ]
   df['SrcBytesCV'] = df.groupby('SequenceId')['SrcBytes'].transform(cv)
   df['SrcBytesSeq'] = df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
   df['TotBytesCV'] = df.groupby('SequenceId')['TotBytes'].transform(cv)
   df['TotBytesSeq'] = df.groupby('SequenceId')['TotBytes'].transform(sumOf)
   df['TotPktsCV'] = df.groupby('SequenceId')['TotPkts'].transform(cv)
   df['TotPktsSeq'] = df.groupby('SequenceId')['TotPkts'].transform(sumOf)
-  df = df[df['SrcBytesCV'] <= SrcBytesCVThreshold ]
-  df = df[df['SrcBytesSeq'] > SrcBytesThreshold]
+
+  df = df[df['elementsInSequence'] > 1]
+  df = df[(df['SrcBytesSeq'] > SrcBytesThreshold) | (df['elementsInSequence'] > df['elementsInSequence'].mean())]
+  # df = df[df['SrcBytesCV'] <= SrcBytesCVThreshold ]
 
   watcherEnd(ctx, start)
   return df
 
-def methodEvaluation(dataset, actual_df, predicted_df):
+def methodEvaluation(dataset, actual_df, predicted_df, method='Proposed Sequence Pattern Miner'):
   ctx='Method Evaluation'
   start = watcherStart(ctx)
   addressPredictedAsBotnet = predicted_df['SrcAddr'].unique()
@@ -61,8 +63,7 @@ def methodEvaluation(dataset, actual_df, predicted_df):
   result_df.columns = ['SrcAddr','ActualClass']
   result_df['PredictedClass'] = result_df['SrcAddr'].isin(addressPredictedAsBotnet)
 
-  mlTools.evaluation(dataset, result_df['ActualClass'], result_df['PredictedClass'], 'Proposed Sequence Pattern Miner')
-
+  mlTools.evaluation(dataset, result_df['ActualClass'], result_df['PredictedClass'], method)
   watcherEnd(ctx, start)
 
 def main():
@@ -72,7 +73,7 @@ def main():
   datasetDetail={
     'datasetName': ctu,
     'stringDatasetName': 'ctu',
-    'selected': 'scenario4'
+    'selected': 'scenario11'
   }
   ##### with input menu
   # datasetName, stringDatasetName, selected = datasetMenu.getData()
@@ -84,23 +85,19 @@ def main():
 
   print('\n'+datasetDetail['stringDatasetName'])
   print(datasetDetail['selected'])
-  df = raw_df.copy() #get a copy from dataset to prevent processed data
-  result = ml.predict(df)
-  raw_df['predictionResult'] = result
+
   processed_df = raw_df[~raw_df['Dport'].isin(commonPorts)] #filter traffic use common ports
   processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)] #filter traffic use common ports
-  processed_df = processed_df[processed_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+  processed_df = processed_df[processed_df['TotPkts'] < processed_df['TotPkts'].mean()]
 
   new_df = tools.withDataframe(processed_df)
-  SrcBytesThreshold = raw_df['SrcBytes'].mean()
-  SrcBytesCVThreshold = 75
-  new_df = packetAnalysis(new_df, SrcBytesThreshold, SrcBytesCVThreshold)
+  new_df = packetAnalysis(new_df)
+
   datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-  methodEvaluation(datasetName, raw_df, new_df)
+  methodEvaluation(datasetName, raw_df, new_df, 'Proposed Sequence Pattern Miner')
   ##### single subDataset
 
   watcherEnd(ctx, start)
-
 
 def executeAllData():
   ctx='Sequential Pattern Mining (Main) - Execute All Data'
@@ -122,19 +119,15 @@ def executeAllData():
         datasetDetail['selected'],
         datasetDetail['stringDatasetName'])
 
-      df = raw_df.copy() #get a copy from dataset to prevent processed data
-      result = ml.predict(df)
-      raw_df['predictionResult'] = result
       processed_df = raw_df[~raw_df['Dport'].isin(commonPorts)] #filter traffic use common ports
       processed_df = processed_df[~processed_df['Sport'].isin(commonPorts)] #filter traffic use common ports
-      processed_df = processed_df[processed_df['predictionResult'] == 0] #remove background (ActivityLabel == 1)
+      processed_df = processed_df[processed_df['TotPkts'] < processed_df['TotPkts'].mean()]
 
       new_df = tools.withDataframe(processed_df)
-      SrcBytesThreshold = raw_df['SrcBytes'].mean()
-      SrcBytesCVThreshold = 75
-      new_df = packetAnalysis(new_df, SrcBytesThreshold, SrcBytesCVThreshold)
+      new_df = packetAnalysis(new_df)
+
       datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-      methodEvaluation(datasetName, raw_df, new_df)
+      methodEvaluation(datasetName, raw_df, new_df, 'Proposed Sequence Pattern Miner')
   ##### loop all dataset
 
   watcherEnd(ctx, start)

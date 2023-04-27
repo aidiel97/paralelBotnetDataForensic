@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 algorithmDict = {
   'decisionTree': DecisionTreeClassifier(),
   'randomForest': RandomForestClassifier(n_estimators=100),
-  'svc' : SVC(kernel='linear', C=10.0, random_state=1),
+  # 'svc' : SVC(kernel='linear', C=10.0, random_state=1),
   'naiveBayes': GaussianNB(),
   'knn': KNeighborsClassifier(),
   'logisticRegression' : LogisticRegression(C=10000, solver='liblinear')
