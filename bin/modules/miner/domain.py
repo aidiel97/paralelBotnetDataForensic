@@ -1,20 +1,12 @@
-import uuid
-import math
-import pandas as pd
 import numpy as np
 
 import bin.helpers.utilities.dataLoader as loader
-import bin.modules.preProcessing.transform as preProcessing
-import bin.modules.miner.model as model
-import bin.modules.machineLearning.domain as ml
 import bin.modules.machineLearning.machineLearning as mlTools
-import bin.modules.utilities.domain as utilities
 import bin.modules.miner.sequenceMiner as tools
 
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.database import *
-from itertools import combinations
 
 timeGapValue = 80
 seqWidth = 3600
