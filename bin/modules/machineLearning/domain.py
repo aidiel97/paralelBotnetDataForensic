@@ -110,11 +110,42 @@ def executeAllData():
 
         df = raw_df.copy() #get a copy from dataset to prevent processed data
         result = predict(df, algo)
-        df['predictionResult'] = result
-        new_df = df[df['predictionResult'] == 0]
+        raw_df['predictionResult'] = result
+        new_df = raw_df[raw_df['predictionResult'] == 1]
         
         datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
         miner.methodEvaluation(datasetName, raw_df, new_df, algo)
   ##### loop all dataset
 
   watcherEnd(ctx, start)
+
+def singleData():
+  ctx='Machine learning Classification - Single Data'
+  start = watcherStart(ctx)
+
+  for algo in list(ml.algorithmDict.keys()):
+    modellingWithCTU(algo)
+    ##### single subDataset
+    datasetDetail={
+      'datasetName': ctu,
+      'stringDatasetName': 'ctu',
+      'selected': 'scenario11'
+    }
+    ##### with input menu
+    # datasetName, stringDatasetName, selected = datasetMenu.getData()
+    ##### with input menu
+    raw_df = loader.binetflow(
+      datasetDetail['datasetName'],
+      datasetDetail['selected'],
+      datasetDetail['stringDatasetName'])
+
+    print('\n'+datasetDetail['stringDatasetName'])
+    print(datasetDetail['selected'])
+
+    df = raw_df.copy() #get a copy from dataset to prevent processed data
+    result = predict(df, algo)
+    raw_df['predictionResult'] = result
+    new_df = raw_df[raw_df['predictionResult'] == 1]
+    
+    datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
+    miner.methodEvaluation(datasetName, raw_df, new_df, algo)
