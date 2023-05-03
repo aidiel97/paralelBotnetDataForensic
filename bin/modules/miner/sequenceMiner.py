@@ -8,7 +8,7 @@ from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.database import *
 
-timeGapValue = 80
+timeGapValue = 13
 collection = 'sequences'
 itemsetCollection = 'itemsets'
 sequenceOf = 'SrcAddr' #sequence created base on DstAddr / SrcAddr

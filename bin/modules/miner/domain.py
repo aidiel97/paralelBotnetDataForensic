@@ -8,7 +8,7 @@ from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.database import *
 
-timeGapValue = 80
+timeGapValue = 13
 seqWidth = 3600
 collection = 'sequences'
 itemsetCollection = 'itemsets'
@@ -39,8 +39,12 @@ def packetAnalysis(df):
   df['TotPktsSeq'] = df.groupby('SequenceId')['TotPkts'].transform(sumOf)
 
   df = df[df['elementsInSequence'] > 1]
-  df = df[(df['SrcBytesSeq'] > SrcBytesThreshold) | (df['elementsInSequence'] > df['elementsInSequence'].mean())]
-  # df = df[df['SrcBytesCV'] <= SrcBytesCVThreshold ]
+  df = df[
+      (df['SrcBytesSeq'] > SrcBytesThreshold) |
+      (df['elementsInSequence'] > df['elementsInSequence'].mean()) |
+      (df['TotPktsCV'] <= df['TotPktsCV'].mean())
+      # (df['SrcBytesCV'] <= df['SrcBytesCV'].mean())
+    ]
 
   watcherEnd(ctx, start)
   return df
