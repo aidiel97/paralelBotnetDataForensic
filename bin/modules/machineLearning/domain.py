@@ -20,6 +20,8 @@ def preProcessingModule(df):
   df['Proto']= df['Proto'].map(protoDict).fillna(0.0).astype(int)
   #transform with dictionary
 
+  df['StartTime'] = df['StartTime'].apply(transform.timeToUnix).fillna(0)
+
   df['Sport'] = pd.factorize(df.Sport)[0]
   df['Dport'] = pd.factorize(df.Dport)[0]
 

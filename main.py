@@ -23,5 +23,6 @@ if __name__ == "__main__":
     ('Network Time Gap Analysis', analysis.timeGap),
     ('Network Traffic Packet Source Bytes Analysis', analysis.SrcBytes),
     ('Sequence Analysis', analysis.sequence),
+    ('Export Binetflow Dataset', analysis.exportDataset),
   ]
   cli.menu(listMenu)

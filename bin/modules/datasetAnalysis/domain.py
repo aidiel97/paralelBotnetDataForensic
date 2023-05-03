@@ -1,9 +1,11 @@
 import bin.helpers.utilities.dataLoader as loader
 import bin.modules.preProcessing.transform as preProcessing
 import bin.modules.miner.sequenceMiner as minerTools
+import bin.modules.machineLearning.domain as ml
 
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
+from bin.helpers.utilities.dirManagement import *
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -162,63 +164,36 @@ def sequence():
     plt.savefig('collections/'+stringDatasetName+selected+'elementInsequenceAnalysis.png')
     new_df.describe().transpose().to_csv('collections/'+stringDatasetName+selected+'elementInsequenceAnalysis.csv')
 
-def segmentation(datasetDetail):
-  ctx='Segmenting Dataset by Time'
+def exportDataset():
+  ctx = 'exportDataset'
   start = watcherStart(ctx)
-  datasetName = datasetDetail['datasetName']
-  stringDatasetName = datasetDetail['stringDatasetName']
-  selected = datasetDetail['selected']
+  checkDir('collections/dataset')
 
-  df = loader.binetflow(datasetName, selected, stringDatasetName)
-  df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
-  df = df.sort_values(by=['Unix'])
-  df['Segment'] = df['Unix'].apply(preProcessing.defineSegment).fillna(0)
+  for dataset in listAvailableDatasets[:3]:
+    exportDir = 'collections/dataset/'+dataset['name']
+    checkDir(exportDir)
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
 
-  srcAddr = df.SrcAddr.unique()
-  plotDataMatrix = []
-  for address in srcAddr:
-    addressData = []
-    for segment in df.Segment.unique():
-      addressData.append(len(df[(df.Segment == segment) & (df.SrcAddr == address)]))
-    plotDataMatrix.append(addressData)
+      raw_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+      
+      raw_df = raw_df.reset_index(drop=True)
+      raw_df.to_csv(exportDir+'/'+scenario+'.csv', index=False)
+      print(raw_df)
 
-  data = np.array(plotDataMatrix)
-  plt.plot(data.T)
-  plt.xlabel('Segment')
-  plt.ylabel('Count')
-  plt.title('Line Plot')
-  plt.legend(srcAddr)
-  plt.savefig('collections/'+stringDatasetName+'_'+selected+'-linePlot.png')
-
-  watcherEnd(ctx, start)
-
-def segmentAnalysis():
-  ctx='Dataset Time Segment Analysis'
-  start = watcherStart(ctx)
-    ##### with input menu
-  # datasetName, stringDatasetName, selected = datasetMenu.getData()
-    ##### with input menu
-
-    ##### with looping all Dataset
-  # for dataset in listAvailableDatasets[:3]:
-  #   print(dataset['name'])
-  #   for scenario in dataset['list']:
-  #     print(scenario)
-  #     datasetDetail={
-  #       'datasetName': dataset['list'],
-  #       'stringDatasetName': dataset['shortName'],
-  #       'selected': scenario
-  #     }
-  #     segmentation(datasetDetail)
-  #   ##### with looping all Dataset
-    
-    ##### single subDataset
-  datasetDetail = datasetDetail={
-    'datasetName': ctu,
-    'stringDatasetName': 'ctu',
-    'selected': 'scenario4'
-  }
-  segmentation(datasetDetail)
-    ##### single subDataset
+      df = ml.preProcessingModule(raw_df) 
+      df = df.reset_index(drop=True)
+      df.drop(columns='Label', inplace=True)
+      df.to_csv(exportDir+'/preProcessed-'+scenario+'.csv', index=False)
+      print(df)
 
   watcherEnd(ctx, start)
