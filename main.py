@@ -22,6 +22,6 @@ if __name__ == "__main__":
     ('Sequence Pattern Mining for Detection', spm4d.main),
     ('Network Time Gap Analysis', analysis.timeGap),
     ('Network Traffic Packet Source Bytes Analysis', analysis.SrcBytes),
-    ('Element In Sequence Analysis', analysis.elementInSequence),
+    ('Sequence Analysis', analysis.sequence),
   ]
   cli.menu(listMenu)

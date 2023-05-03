@@ -94,7 +94,9 @@ def equateListLength(dct):
   
   return dct
 
-def elementInSequence():
+def sequence():
+  cv = lambda x: np.std(x) / np.mean(x)*100 #coefficient of variation (CV)
+  sumOf = lambda x: np.sum(x)
   trainDataset = [
     'scenario3','scenario4','scenario5',
     'scenario7',
@@ -104,42 +106,61 @@ def elementInSequence():
   datasetName = ctu
   stringDatasetName = 'ctu'
   for selected in trainDataset:
-    arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
-  df = pd.concat(arrayDf, axis=0)
-  df.reset_index(drop=True, inplace=True)
+    df = loader.binetflow(datasetName, selected, stringDatasetName)
 
-  df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
-  botnet = df[df['ActivityLabel'] == 'botnet']
-  normal = df[df['ActivityLabel'] == 'normal']
-  background = df[df['ActivityLabel'] == 'background']
+    df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
+    botnet = df[df['ActivityLabel'] == 'botnet']
+    normal = df[df['ActivityLabel'] == 'normal']
+    background = df[df['ActivityLabel'] == 'background']
 
-  all_df = minerTools.withDataframe(df)
-  all_df['elementsInSequence'] = all_df.groupby('SequenceId')['SequenceId'].transform('count')
-  
-  botnet_df = minerTools.withDataframe(botnet)
-  botnet_df['elementsInSequence'] = botnet_df.groupby('SequenceId')['SequenceId'].transform('count')
+    all_df = minerTools.withDataframe(df)
+    all_df['elementsInSequence'] = all_df.groupby('SequenceId')['SequenceId'].transform('count')
 
-  background_df = minerTools.withDataframe(background)
-  background_df['elementsInSequence'] = background_df.groupby('SequenceId')['SequenceId'].transform('count')
-  
-  normal_df = minerTools.withDataframe(normal)
-  normal_df['elementsInSequence'] = normal_df.groupby('SequenceId')['SequenceId'].transform('count')
+    botnet_df = minerTools.withDataframe(botnet)
+    botnet_df['elementsInSequence'] = botnet_df.groupby('SequenceId')['SequenceId'].transform('count')
+    botnet_df['SrcBytesCV'] = botnet_df.groupby('SequenceId')['SrcBytes'].transform(cv)
+    botnet_df['SrcBytesSeq'] = botnet_df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
+    botnet_df['TotBytesCV'] = botnet_df.groupby('SequenceId')['TotBytes'].transform(cv)
+    botnet_df['TotBytesSeq'] = botnet_df.groupby('SequenceId')['TotBytes'].transform(sumOf)
+    botnet_df['TotPktsCV'] = botnet_df.groupby('SequenceId')['TotPkts'].transform(cv)
+    botnet_df['TotPktsSeq'] = botnet_df.groupby('SequenceId')['TotPkts'].transform(sumOf)
+    botnet_df.describe().transpose().to_csv('collections/'+stringDatasetName+selected+'-botnet-sequenceAnalysis.csv')
 
-  data_dict = equateListLength({
-    'botnet': botnet_df['elementsInSequence'].values.tolist(),
-    'background': background_df['elementsInSequence'].values.tolist(),
-    'normal': normal_df['elementsInSequence'].values.tolist(),
-    'allData': all_df['elementsInSequence'].values.tolist()
-  })
+    background_df = minerTools.withDataframe(background)
+    background_df['elementsInSequence'] = background_df.groupby('SequenceId')['SequenceId'].transform('count')
+    background_df['SrcBytesCV'] = background_df.groupby('SequenceId')['SrcBytes'].transform(cv)
+    background_df['SrcBytesSeq'] = background_df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
+    background_df['TotBytesCV'] = background_df.groupby('SequenceId')['TotBytes'].transform(cv)
+    background_df['TotBytesSeq'] = background_df.groupby('SequenceId')['TotBytes'].transform(sumOf)
+    background_df['TotPktsCV'] = background_df.groupby('SequenceId')['TotPkts'].transform(cv)
+    background_df['TotPktsSeq'] = background_df.groupby('SequenceId')['TotPkts'].transform(sumOf)
+    background_df.describe().transpose().to_csv('collections/'+stringDatasetName+selected+'-background-sequenceAnalysis.csv')
 
-  new_df = pd.DataFrame(data_dict)
-  plt.figure()
-  new_df.boxplot(showfliers=False)
-  plt.xticks(rotation=90)
-  # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
-  plt.subplots_adjust(bottom=0.25)
-  plt.savefig('collections/elementInsequenceAnalysis.png')
-  new_df.describe().transpose().to_csv('collections/elementInsequenceAnalysis.csv')
+    normal_df = minerTools.withDataframe(normal)
+    normal_df['elementsInSequence'] = normal_df.groupby('SequenceId')['SequenceId'].transform('count')
+    normal_df['SrcBytesCV'] = normal_df.groupby('SequenceId')['SrcBytes'].transform(cv)
+    normal_df['SrcBytesSeq'] = normal_df.groupby('SequenceId')['SrcBytes'].transform(sumOf)
+    normal_df['TotBytesCV'] = normal_df.groupby('SequenceId')['TotBytes'].transform(cv)
+    normal_df['TotBytesSeq'] = normal_df.groupby('SequenceId')['TotBytes'].transform(sumOf)
+    normal_df['TotPktsCV'] = normal_df.groupby('SequenceId')['TotPkts'].transform(cv)
+    normal_df['TotPktsSeq'] = normal_df.groupby('SequenceId')['TotPkts'].transform(sumOf)
+    normal_df.describe().transpose().to_csv('collections/'+stringDatasetName+selected+'-normal-sequenceAnalysis.csv')
+
+    data_dict = equateListLength({
+      'botnet': botnet_df['elementsInSequence'].values.tolist(),
+      'background': background_df['elementsInSequence'].values.tolist(),
+      'normal': normal_df['elementsInSequence'].values.tolist(),
+      'allData': all_df['elementsInSequence'].values.tolist()
+    })
+
+    new_df = pd.DataFrame(data_dict)
+    plt.figure()
+    new_df.boxplot(showfliers=False)
+    plt.xticks(rotation=90)
+    # Adjust the spacing between the subplots to prevent the x-tick labels from being cropped
+    plt.subplots_adjust(bottom=0.25)
+    plt.savefig('collections/'+stringDatasetName+selected+'elementInsequenceAnalysis.png')
+    new_df.describe().transpose().to_csv('collections/'+stringDatasetName+selected+'elementInsequenceAnalysis.csv')
 
 def segmentation(datasetDetail):
   ctx='Segmenting Dataset by Time'
