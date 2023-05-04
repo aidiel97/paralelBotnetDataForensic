@@ -189,12 +189,14 @@ def exportDataset():
       raw_df = raw_df.reset_index(drop=True)
       raw_df.to_csv(exportDir+'/'+scenario+'.csv', index=False)
       print(raw_df)
+      print(raw_df.info())
 
       df = ml.preProcessingModule(raw_df) 
       df = df.reset_index(drop=True)
       df.drop(columns='Label', inplace=True)
       df.to_csv(exportDir+'/preProcessed-'+scenario+'.csv', index=False)
       print(df)
+      print(df.info())
 
   watcherEnd(ctx, start)
 

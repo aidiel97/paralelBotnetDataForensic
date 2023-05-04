@@ -32,15 +32,15 @@ def preProcessingModule(df):
   df['DstAddr'] = df['DstAddr'].apply(transform.ipToInteger).fillna(0)
   #transform ip to integer
 
-  dir_values_to_encode = ['  <->' '   ->' '  who' '  <-' '  <?>' '   ?>' '  <?']
-  #one hot encode
-  dummy_cols =pd.get_dummies(
-    df['Dir'].apply(lambda x: x if x in dir_values_to_encode else 'other'), drop_first=True, prefix='Dir')
-  df = pd.concat([df,dummy_cols],axis=1)
-  df.drop(columns='Dir', axis=1, inplace=True)
-
   null.setEmptyString(df)
   # cleansing.featureDropping(df, ['sTos','dTos','Dir'])
+
+  #one hot encode
+  dir_values_to_encode = ['  <->','   ->','  who','  <-','  <?>','   ?>','  <?']
+  dummy_cols =pd.get_dummies(
+    df['Dir'].apply(lambda x: x if x in dir_values_to_encode else 'other'), columns=dir_values_to_encode, prefix='Dir')
+  df = pd.concat([df,dummy_cols],axis=1)
+  df.drop(columns='Dir', axis=1, inplace=True)
   
   return df
 
