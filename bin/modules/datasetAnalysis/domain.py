@@ -197,3 +197,30 @@ def exportDataset():
       print(df)
 
   watcherEnd(ctx, start)
+
+def exportAllCategoricalFetureUnique():
+  ctx = 'exportDataset'
+  start = watcherStart(ctx)
+  raw_df = pd.DataFrame()
+
+  for dataset in listAvailableDatasets[:3]:
+    exportDir = 'collections/dataset/'+dataset['name']
+    checkDir(exportDir)
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
+      this_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+      raw_df = pd.concat([raw_df, this_df], ignore_index=True)
+  
+  raw_df = raw_df.reset_index(drop=True)
+  print(raw_df['Dir'].unique())
+
+  watcherEnd(ctx, start)

@@ -24,5 +24,6 @@ if __name__ == "__main__":
     ('Network Traffic Packet Source Bytes Analysis', analysis.SrcBytes),
     ('Sequence Analysis', analysis.sequence),
     ('Export Binetflow Dataset', analysis.exportDataset),
+    ('Export All Categorical Feature Unique', analysis.exportAllCategoricalFetureUnique),
   ]
   cli.menu(listMenu)

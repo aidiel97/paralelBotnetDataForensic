@@ -33,7 +33,7 @@ def preProcessingModule(df):
   #transform ip to integer
 
   null.setEmptyString(df)
-  cleansing.featureDropping(df, ['sTos','dTos','Dir'])
+  # cleansing.featureDropping(df, ['sTos','dTos','Dir'])
   
   return df
 
