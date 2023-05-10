@@ -25,7 +25,11 @@ def unique(list1):
 def packetAnalysis(df):
   ctx='Method Evaluation'
   start = watcherStart(ctx)
-  SrcBytesThreshold = df['SrcBytes'].mean()
+  # SrcBytesThreshold = df['SrcBytes'].mean()
+  # elementInsequencethreshold = df['elementsInSequence'].mean()
+  elementInsequencethreshold = 49 #minimum
+  SrcBytesThreshold = 62 #minimum
+  totPktsCVThreshold = 753 #maksimum
 
   cv = lambda x: np.std(x) / np.mean(x)*100 #coefficient of variation (CV)
   sumOf = lambda x: np.sum(x)
@@ -39,12 +43,14 @@ def packetAnalysis(df):
   df['TotPktsSeq'] = df.groupby('SequenceId')['TotPkts'].transform(sumOf)
 
   df = df[df['elementsInSequence'] > 1]
+
+  #query filtering ini perlu dianalisis
   df = df[
       (df['SrcBytesSeq'] > SrcBytesThreshold) |
-      (df['elementsInSequence'] > df['elementsInSequence'].mean()) |
-      (df['TotPktsCV'] <= df['TotPktsCV'].mean())
-      # (df['SrcBytesCV'] <= df['SrcBytesCV'].mean())
+      (df['elementsInSequence'] > elementInsequencethreshold)
     ]
+
+  df = df[df['TotPktsCV'] < totPktsCVThreshold]
 
   watcherEnd(ctx, start)
   return df

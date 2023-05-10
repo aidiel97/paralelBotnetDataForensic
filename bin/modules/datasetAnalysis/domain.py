@@ -6,10 +6,12 @@ import bin.modules.machineLearning.domain as ml
 from bin.helpers.utilities.watcher import *
 from bin.helpers.common.main import *
 from bin.helpers.utilities.dirManagement import *
+from bin.helpers.utilities.csvGenerator import *
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 botnetDiff = {}
 backgroundDiff = {}
@@ -224,5 +226,39 @@ def exportAllCategoricalFetureUnique():
   
   raw_df = raw_df.reset_index(drop=True)
   print(raw_df['Dir'].unique())
+
+  watcherEnd(ctx, start)
+
+def segmentAnalysis():
+  ctx = 'Segment Analysis'
+  start = watcherStart(ctx)
+  trainDataset = [
+    'scenario3','scenario4','scenario5',
+    'scenario7',
+    'scenario10','scenario11','scenario12','scenario13'
+    ]
+  arrayDf = []
+  datasetName = ctu
+  stringDatasetName = 'ctu'
+  for selected in trainDataset:
+    df = loader.binetflow(datasetName, selected, stringDatasetName)
+    df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
+    df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
+    datasetStartAt = df['Unix'].min()
+    df['Segment'] = (df['Unix']+1-datasetStartAt)/3600
+    df['Segment'] = df['Segment'].apply(lambda x: math.ceil(x))
+    segmentCount = df['Segment'].unique()
+
+    fileName = 'collections/segmentAnalysis.csv'
+    for segment in segmentCount:
+      exportWithObject({
+        'dataset':stringDatasetName,
+        'scenario':selected,
+        'segment': segment,
+        'backgroundTraffic': len(df[(df['ActivityLabel'] == 'background') & (df['Segment'] == segment)]),
+        'botnetTraffic': len(df[(df['ActivityLabel'] == 'botnet') & (df['Segment'] == segment)]),
+        'normalTraffic': len(df[(df['ActivityLabel'] == 'normal') & (df['Segment'] == segment)]),
+      }, fileName)
+    
 
   watcherEnd(ctx, start)

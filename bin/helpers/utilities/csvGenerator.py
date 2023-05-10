@@ -48,7 +48,7 @@ def classificationResult(classificationContext, algorithm, tn, fp, fn, tp):
   watcherEnd(ctx, start)
 
 def exportWithObject(object, fileName):
-  ctx= 'Export Similarity Result'
+  ctx= 'Export data to: '+fileName
   start= watcherStart(ctx)
   # list of column names 
   field_names = object.keys()

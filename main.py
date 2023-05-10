@@ -23,6 +23,7 @@ if __name__ == "__main__":
     ('Network Time Gap Analysis', analysis.timeGap),
     ('Network Traffic Packet Source Bytes Analysis', analysis.SrcBytes),
     ('Sequence Analysis', analysis.sequence),
+    ('Segment Analysis', analysis.segmentAnalysis),
     ('Export Binetflow Dataset', analysis.exportDataset),
     ('Export All Categorical Feature Unique', analysis.exportAllCategoricalFetureUnique),
   ]
