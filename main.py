@@ -26,5 +26,6 @@ if __name__ == "__main__":
     ('Segment Analysis', analysis.segmentAnalysis),
     ('Export Binetflow Dataset', analysis.exportDataset),
     ('Export All Categorical Feature Unique', analysis.exportAllCategoricalFetureUnique),
+    ('Network Actor Analysis', analysis.networkActor),
   ]
   cli.menu(listMenu)

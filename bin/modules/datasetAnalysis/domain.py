@@ -260,5 +260,37 @@ def segmentAnalysis():
         'normalTraffic': len(df[(df['ActivityLabel'] == 'normal') & (df['Segment'] == segment)]),
       }, fileName)
     
+  watcherEnd(ctx, start)
+
+def networkActor():
+  ctx = 'Network Actor Analysis'
+  start = watcherStart(ctx)
+  fileName = 'collections/countOfNetworkActor.csv'
+
+  for dataset in listAvailableDatasets[:3]:
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
+
+      raw_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+      
+      raw_df['isBotnet'] = raw_df['Label'].apply(preProcessing.labelSimplier)
+      result_df = raw_df.groupby('isBotnet')['SrcAddr'].nunique().reset_index(name='Count')
+      result_dict = result_df.set_index('isBotnet')['Count'].to_dict()
+      exportWithObject({
+        'dataset':datasetDetail['stringDatasetName'],
+        'scenario':datasetDetail['selected'],
+        'BackgroundSrcAddr':result_dict['background'],
+        'BotnetSrcAddr':result_dict['botnet'],
+        'NormalSrcAddr':result_dict['normal'],
+      }, fileName)
 
   watcherEnd(ctx, start)
