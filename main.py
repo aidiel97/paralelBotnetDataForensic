@@ -4,16 +4,19 @@
 
 import warnings
 warnings.simplefilter(action='ignore')
-import bin.interfaces.cli.main as cli
-import bin.modules.spm4Detection.domain as spm4d
-import bin.modules.datasetAnalysis.domain as analysis
-import bin.modules.miner.domain as miner
-import bin.modules.sensorBasedPattern.domain as sbp
-import bin.modules.machineLearning.domain as ml
+import interfaces.cli.main as cli
+import pkg.spm4Detection.domain as spm4d
+import pkg.datasetAnalysis.domain as analysis
+import pkg.miner.domain as miner
+import pkg.sensorBasedPattern.domain as sbp
+import pkg.machineLearning.domain as ml
+import pkg.graphVisualization.domain as grp
 
 if __name__ == "__main__":
   listMenu = [
     ('Generate Machine Learning Models', ml.modellingWithCTU),
+    ('[Single Dataset] Graph Dataset Generator', grp.singleData),
+    ('[Test All Dataset] Graph Dataset Generator', grp.executeAllData),
     ('[Single Dataset]Test Machine Learning Models', ml.singleData),
     ('[Test All Dataset]Test Machine Learning Models', ml.executeAllData),
     ('[Single Dataset] Sequential Pattern Mining for Detection', miner.main),
