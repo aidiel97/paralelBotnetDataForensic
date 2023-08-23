@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 import helpers.utilities.dataLoader as loader
 import pkg.preProcessing.transform as pp
+import pkg.machineLearning.machineLearning as ml
 
 from helpers.utilities.watcher import *
 from helpers.common.main import *
@@ -95,7 +96,7 @@ def singleData():
     datasetDetail = {
         'datasetName': ctu,
         'stringDatasetName': 'ctu',
-        'selected': 'scenario11'
+        'selected': 'scenario7'
     }
     ##### with input menu
     # datasetName, stringDatasetName, selected = datasetMenu.getData()
@@ -107,7 +108,9 @@ def singleData():
 
     raw_df['Label'] = raw_df['Label'].apply(pp.labelSimplier)
     botnet = raw_df[raw_df['Label'] == 'botnet']
+    normal = raw_df[raw_df['Label'] == 'normal']
     listBotnetAddress = botnet['SrcAddr'].unique()
+    listNormalAddress = normal['SrcAddr'].unique()
     
     G = nx.DiGraph()
     generatorWithEdgesArray(G, raw_df)
@@ -117,9 +120,11 @@ def singleData():
 
     objData = {}
     for node in G.nodes():
-        label = 'botnet'
-        if node not in listBotnetAddress:
-            label = 'normal'
+        label = 2 #need to try multilable detection
+        if node in listBotnetAddress:
+            label = 1
+        if node in listNormalAddress:
+            label = 2
         obj = {
             'Address': node,
             'WeightedOutDegree': G.out_degree(node, weight='weight'),
@@ -133,7 +138,17 @@ def singleData():
         objData[node] = obj
     
     filename = 'collections/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'.csv'
-    exportWithArrayOfObject(list(objData.values()), filename)
+    # exportWithArrayOfObject(list(objData.values()), filename)
+
+    df = pd.DataFrame(objData.values())
+    
+    x = df.drop(['Label', 'Address'],axis=1)
+    y = df['Label']
+    
+    ml.modelling(x, y, 'randomForest')
+    predictionResult = ml.classification(x, 'randomForest')
+    print(predictionResult)
+    ml.evaluation(ctx, y, predictionResult, 'randomForest')
 
     # exportGraph(G)
     watcherEnd(ctx, start)
@@ -186,7 +201,17 @@ def executeAllData():
             objData[node] = obj
         
         filename = 'collections/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'.csv'
-        exportWithArrayOfObject(list(objData.values()), filename)
+        # exportWithArrayOfObject(list(objData.values()), filename)
+
+        df = pd.DataFrame(objData.values())
+        
+        x = df.drop(['Label', 'Address'],axis=1)
+        y = df['Label']
+        
+        ml.modelling(x, y, 'randomForest')
+        predictionResult = ml.classification(x, 'randomForest')
+        print(predictionResult)
+        ml.evaluation(ctx, y, predictionResult, 'randomForest')
 
   ##### loop all dataset
 
