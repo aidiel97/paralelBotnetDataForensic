@@ -72,7 +72,6 @@ def generatorWithEdgesArray(G, df, usePkts=False): #if usePkts=True, will weight
 
     for index, row in df.iterrows():
         addressName = row['SrcAddr']+'-'+row['DstAddr']
-        back2backAddressName = row['DstAddr']+'-'+row['SrcAddr']
         if usePkts:
             weight = row['SrcBytes']
         else:
@@ -81,10 +80,7 @@ def generatorWithEdgesArray(G, df, usePkts=False): #if usePkts=True, will weight
         if addressName in objAddress:
             objAddress[addressName] += weight
         else:
-            if back2backAddressName in objAddress:
-                objAddress[addressName] += weight
-            else:
-                objAddress[addressName] = weight
+            objAddress[addressName] = weight
 
     for index, row in df.iterrows():
         addressName = row['SrcAddr']+'-'+row['DstAddr']
