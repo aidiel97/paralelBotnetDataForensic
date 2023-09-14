@@ -10,7 +10,7 @@ import pkg.datasetAnalysis.domain as analysis
 import pkg.miner.domain as miner
 import pkg.sensorBasedPattern.domain as sbp
 import pkg.machineLearning.domain as ml
-import pkg.graphVisualization.domain as grp
+import pkg.graph.domain as grp
 
 if __name__ == "__main__":
   listMenu = [
