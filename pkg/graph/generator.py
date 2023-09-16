@@ -1,3 +1,4 @@
+import numpy as np
 
 def addNodeFromIp(G, arrayOfIp):
     for element in arrayOfIp:
@@ -22,7 +23,7 @@ def generator(G, df):
         weight =objAddress[addressName]
         G.add_edge(row['SrcAddr'],row['DstAddr'], weight=weight)
 
-def generatorWithEdgesArray(G, df, usePkts=False): #if usePkts=True, will weighting by total Packet transmitted
+def generatorWithEdgesArray(G, df, usePkts=False, calculation='sum'): #if usePkts=True, will weighting by total Packet transmitted
     edges = []
     objAddress = {}
     listSrcAddress = df['SrcAddr'].unique()
@@ -40,13 +41,22 @@ def generatorWithEdgesArray(G, df, usePkts=False): #if usePkts=True, will weight
             weight = 1
 
         if addressName in objAddress:
-            objAddress[addressName] += weight
+            objAddress[addressName].append(weight)
         else:
-            objAddress[addressName] = weight
+            objAddress[addressName] = [weight]
 
     for index, row in df.iterrows():
         addressName = row['SrcAddr']+'-'+row['DstAddr']
-        weight =objAddress[addressName]
+        if calculation == 'cv':
+            array = np.array(objAddress[addressName])
+            weight = ( np.std(array)/np.mean(array) )* 100
+        elif calculation == 'mean':
+            weight = sum(objAddress[addressName]) / len(objAddress[addressName])
+        elif calculation == 'median':
+            weight = np.median(objAddress[addressName])
+        else:
+            weight =sum(objAddress[addressName])
+
         if (row['SrcAddr'],row['DstAddr'],weight) not in edges:
             edges.append((row['SrcAddr'],row['DstAddr'],weight))
             # print((row['SrcAddr'],row['DstAddr'],weight))
