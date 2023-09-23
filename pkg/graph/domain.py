@@ -32,43 +32,40 @@ def dftoGraph(datasetDetail):
 
     G = nx.DiGraph(directed=True)
     generatorWithEdgesArray(G, raw_df)
-    
-    NG = nx.DiGraph()
-    generatorWithEdgesArray(NG, raw_df, True)
-    
-    meanG = nx.DiGraph()
-    generatorWithEdgesArray(meanG, raw_df, True, 'mean')
-    
-    medG = nx.DiGraph()
-    generatorWithEdgesArray(medG, raw_df, True, 'mean')
-
-    CVG = nx.DiGraph()
-    generatorWithEdgesArray(CVG, raw_df, True, 'cv')
 
     objData = {}
     for node in G.nodes():
+        obj={}
         label = 'botnet'
         activityLabel = 1
         if node not in listBotnetAddress:
             label = 'normal'
             activityLabel = 0
-        obj = {
-            'Address': node,
-            'WeightedOutDegree': G.out_degree(node, weight='weight'),
-            'WeightedInDegree': G.in_degree(node, weight='weight'),
-            'OutDegree': G.out_degree(node),
-            'InDegree': G.in_degree(node),
-            'TotSentBytes': NG.out_degree(node, weight='weight'),
-            'TotReceivedBytes': NG.in_degree(node, weight='weight'),
-            'meanSentBytes': meanG.out_degree(node, weight='weight'),
-            'meanReceivedBytes': meanG.in_degree(node, weight='weight'),
-            'medSentBytes': medG.out_degree(node, weight='weight'),
-            'medReceivedBytes': medG.in_degree(node, weight='weight'),
-            'CVSentBytes': CVG.out_degree(node, weight='weight'),
-            'CVReceivedBytes': CVG.in_degree(node, weight='weight'),
-            'Label': label,
-            'ActivityLabel': activityLabel
-        }
+        
+        obj['Address'] = node
+        obj['OutDegree'] = G.out_degree(node)
+        obj['InDegree'] = G.in_degree(node)
+
+        out_edges = G.out_edges(node, data=True)
+        for edge in out_edges:
+           obj['IntensityOutDegree'] = edge[2]['weight'][0]
+           obj['SumSentBytes'] = edge[2]['weight'][1]
+           obj['MeanSentBytes'] = edge[2]['weight'][2]
+           obj['MedSentBytes'] = edge[2]['weight'][3]
+           obj['CVSentBytes'] = edge[2]['weight'][4]
+
+
+        in_edges = G.in_edges(node, data=True)
+        for edge in in_edges:
+           obj['IntensityInDegree'] = edge[2]['weight'][0]
+           obj['SumReceivedBytes'] = edge[2]['weight'][1]
+           obj['MeanReceivedBytes'] = edge[2]['weight'][2]
+           obj['MedReceivedBytes'] = edge[2]['weight'][3]
+           obj['CVReceivedBytes'] = edge[2]['weight'][4]
+
+
+        obj['Label'] = label
+        obj['ActivityLabel'] = activityLabel
         objData[node] = obj
     
     filename = 'collections/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'.csv'
@@ -82,8 +79,8 @@ def singleData():
     start = watcherStart(ctx)
     ##### single subDataset
     datasetDetail = {
-        'datasetName': ctu,
-        'stringDatasetName': 'ctu',
+        'datasetName': ncc,
+        'stringDatasetName': 'ncc',
         'selected': 'scenario7'
     }
     ##### with input menu
@@ -92,19 +89,19 @@ def singleData():
     
     objData = dftoGraph(datasetDetail)
 
-    df = pd.DataFrame(objData.values())
-    df = df.fillna(0)
-    train, test = splitTestAllDataframe(df,0.7)
-    x_train = train.drop(['Label','ActivityLabel', 'Address'],axis=1)
-    y_train = train['ActivityLabel']
+    # df = pd.DataFrame(objData.values())
+    # df = df.fillna(0)
+    # train, test = splitTestAllDataframe(df,0.7)
+    # x_train = train.drop(['Label','ActivityLabel', 'Address'],axis=1)
+    # y_train = train['ActivityLabel']
     
-    x_test = test.drop(['Label','ActivityLabel', 'Address'],axis=1)
-    y_test = test['ActivityLabel']
+    # x_test = test.drop(['Label','ActivityLabel', 'Address'],axis=1)
+    # y_test = test['ActivityLabel']
     
-    ml.modelling(x_train, y_train, 'knn')
-    predictionResult = ml.classification(x_test, 'knn')
-    print(predictionResult)
-    ml.evaluation(ctx, y_test, predictionResult, 'knn')
+    # ml.modelling(x_train, y_train, 'knn')
+    # predictionResult = ml.classification(x_test, 'knn')
+    # print(predictionResult)
+    # ml.evaluation(ctx, y_test, predictionResult, 'knn')
 
     # ##### visualize
     # exportGraph(G, 'collections/graph.png')

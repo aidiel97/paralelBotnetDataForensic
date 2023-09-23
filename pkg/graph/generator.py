@@ -23,7 +23,7 @@ def generator(G, df):
         weight =objAddress[addressName]
         G.add_edge(row['SrcAddr'],row['DstAddr'], weight=weight)
 
-def generatorWithEdgesArray(G, df, usePkts=False, calculation='sum'): #if usePkts=True, will weighting by total Packet transmitted
+def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Packet transmitted
     edges = []
     objAddress = {}
     listSrcAddress = df['SrcAddr'].unique()
@@ -35,30 +35,26 @@ def generatorWithEdgesArray(G, df, usePkts=False, calculation='sum'): #if usePkt
 
     for index, row in df.iterrows():
         addressName = row['SrcAddr']+'-'+row['DstAddr']
-        if usePkts:
-            weight = row['SrcBytes']
-        else:
-            weight = 1
+        bytes = row['SrcBytes']
 
         if addressName in objAddress:
-            objAddress[addressName].append(weight)
+            objAddress[addressName].append(bytes)
         else:
-            objAddress[addressName] = [weight]
+            objAddress[addressName] = [bytes]
 
     for index, row in df.iterrows():
         addressName = row['SrcAddr']+'-'+row['DstAddr']
-        if calculation == 'cv':
-            array = np.array(objAddress[addressName])
-            weight = ( np.std(array)/np.mean(array) )* 100
-        elif calculation == 'mean':
-            weight = sum(objAddress[addressName]) / len(objAddress[addressName])
-        elif calculation == 'median':
-            weight = np.median(objAddress[addressName])
-        else:
-            weight =sum(objAddress[addressName])
+        array = np.array(objAddress[addressName])
+        
+        intensity = len(array)
+        cv = ( np.std(array)/np.mean(array) )* 100
+        mean = sum(objAddress[addressName]) / len(objAddress[addressName])
+        median = np.median(array)
+        sumValue = sum(objAddress[addressName])
+
+        weight = (intensity, sumValue, mean, median, cv)
 
         if (row['SrcAddr'],row['DstAddr'],weight) not in edges:
             edges.append((row['SrcAddr'],row['DstAddr'],weight))
-            # print((row['SrcAddr'],row['DstAddr'],weight))
 
     G.add_weighted_edges_from(edges)
