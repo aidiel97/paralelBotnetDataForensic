@@ -1,5 +1,7 @@
 import networkx as nx
 import pandas as pd
+from tqdm import tqdm
+import time
 
 import helpers.utilities.dataLoader as loader
 import pkg.preProcessing.transform as pp
@@ -14,27 +16,21 @@ from helpers.utilities.csvGenerator import exportWithArrayOfObject
 from pkg.graph.models import *
 from pkg.graph.generator import *
 
-def dftoGraph(datasetDetail):
-    raw_df = loader.binetflow(
-        datasetDetail['datasetName'],
-        datasetDetail['selected'],
-        datasetDetail['stringDatasetName'])
-    # # datasetInSpecificBotnet = ['147.32.84.165','147.32.84.191','147.32.84.192']
-    raw_df['Label'] = raw_df['Label'].apply(pp.labelSimplier)
-    botnet = raw_df[raw_df['Label'] == 'botnet']
-    normal = raw_df.loc[raw_df['Label'] == 'normal']
-    # normal = raw_df.loc[(raw_df['Label'] == 'normal') & (raw_df['DstAddr'].isin(datasetInSpecificBotnet))]
-    # others = raw_df[raw_df['DstAddr'].isin(datasetInSpecificBotnet)]
-    # withoutBackground = raw_df[raw_df['Label'] != 'background']
-    listBotnetAddress = botnet['SrcAddr'].unique()
-    # print(listBotnetAddress)
-    listNormalAddress = normal['SrcAddr'].unique()
+def graphToTabular(G, raw_df):
+    ctx = 'Graph based analysis - Graph to Tabular'
+    start = watcherStart(ctx)
 
-    raw_df = raw_df.fillna('-')
-    G = nx.DiGraph(directed=True)
-    generatorWithEdgesArray(G, raw_df)
-
+    raw_df['ActivityLabel'] = raw_df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
+    botnet = raw_df['ActivityLabel'] == 1
+    botnet_df = raw_df[botnet]
+    normal = raw_df['ActivityLabel'] == 0
+    normal_df = raw_df[normal]
+    listBotnetAddress = botnet_df['SrcAddr'].unique()
+    listNormalAddress = normal_df['SrcAddr'].unique()
+    
     objData = {}
+    totalNodes = G.number_of_nodes()
+    progress_bar = tqdm(total=totalNodes, desc="Processing", unit="item")
     for node in G.nodes():
         label = 'botnet'
         activityLabel = 1
@@ -42,56 +38,67 @@ def dftoGraph(datasetDetail):
             label = 'normal'
             activityLabel = 0
         
+        out_data = raw_df[raw_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([node])]
+        out_srcDesc = out_data['SrcBytes'].describe()
+        in_data = raw_df[raw_df[['DstAddr','Proto']].apply(tuple, axis=1).isin([node])]
+        in_srcDesc = in_data['SrcBytes'].describe()
         obj={
             'Address' : node[0],
             'Proto': node[1],
-            'Sport': node[2],
 
-            'IntensityOutDegree': 0,
-            'SumSentBytes': 0,
-            'MeanSentBytes': 0,
-            'MedSentBytes': 0,
-            'CVSentBytes': 0,
+            'OutDegree': G.out_degree(node),
+            'IntensityOutDegree': G.out_degree(node, weight='weight'),
+            'SumSentBytes': out_data['SrcBytes'].sum(),
+            'MeanSentBytes': out_srcDesc['mean'],
+            'MedSentBytes': out_srcDesc['50%'],
+            'CVSentBytes': (out_srcDesc['std']/out_srcDesc['mean'])*100,
 
-            'IntensityInDegree': 0,
-            'SumReceivedBytes': 0,
-            'MeanReceivedBytes': 0,
-            'MedReceivedBytes': 0,
-            'CVReceivedBytes': 0,
+            'InDegree': G.in_degree(node),
+            'IntensityInDegree': G.in_degree(node, weight='weight'),
+            'SumReceivedBytes': in_data['SrcBytes'].sum(),
+            'MeanReceivedBytes': in_srcDesc['mean'],
+            'MedReceivedBytes': in_srcDesc['50%'],
+            'CVReceivedBytes': (in_srcDesc['std']/in_srcDesc['mean'])*100,
 
             'Label': label,
             'ActivityLabel': activityLabel
         }
-
-        out_edges = G.out_edges(node, data=True)
-        for o_edge in out_edges:       
-           obj['IntensityOutDegree'] = o_edge[2]['weight'][0]
-           obj['SumSentBytes'] = o_edge[2]['weight'][1]
-           obj['MeanSentBytes'] = o_edge[2]['weight'][2]
-           obj['MedSentBytes'] = o_edge[2]['weight'][3]
-           obj['CVSentBytes'] = o_edge[2]['weight'][4]
-
-        in_edges = G.in_edges(node, data=True)
-        for i_edge in in_edges:
-           obj['IntensityInDegree'] = i_edge[2]['weight'][0]
-           obj['SumReceivedBytes'] = i_edge[2]['weight'][1]
-           obj['MeanReceivedBytes'] = i_edge[2]['weight'][2]
-           obj['MedReceivedBytes'] = i_edge[2]['weight'][3]
-           obj['CVReceivedBytes'] = i_edge[2]['weight'][4]
-
-        obj['OutDegree'] = G.out_degree(node)
-        obj['InDegree'] = G.in_degree(node)
-        obj['Address'] = node[0]
-        obj['Proto'] = node[1]
-        obj['Sport'] = node[2]
-        obj['Label'] = label
-        obj['ActivityLabel'] = activityLabel
         
         objData[node] = obj
+        time.sleep(0.1)  # Simulate work with a delay
 
+        # Update the progress bar
+        progress_bar.update(1)
+
+    # Close the progress bar
+    progress_bar.close()
+
+    # Print a completion message
+    print("Processing complete.")
+    watcherEnd(ctx, start)
+    return objData
+
+def dftoGraph(datasetDetail):
+    ctx = 'Graph based analysis - DF to Graph'
+    start = watcherStart(ctx)
+    raw_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+
+    # keyFilter = ('147.32.84.165', 'udp')
+    # new_df = botnet_df[botnet_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([keyFilter])]
+    # print(new_df['SrcBytes'].sum())
+
+    raw_df = raw_df.fillna('-')
+    G = nx.DiGraph(directed=True)
+    generatorWithEdgesArray(G, raw_df)
+    objData = graphToTabular(G, raw_df)
+    
     filename = 'collections/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'.csv'
     exportWithArrayOfObject(list(objData.values()), filename)
 
+    watcherEnd(ctx, start)
     return objData
 
 
@@ -100,8 +107,8 @@ def singleData():
     start = watcherStart(ctx)
     ##### single subDataset
     datasetDetail = {
-        'datasetName': ncc,
-        'stringDatasetName': 'ncc',
+        'datasetName': ctu,
+        'stringDatasetName': 'ctu',
         'selected': 'scenario7'
     }
     ##### with input menu
@@ -148,19 +155,19 @@ def executeAllData():
 
         objData = dftoGraph(datasetDetail)
 
-        df = pd.DataFrame(objData.values())
-        df = df.fillna(0)
-        train, test = splitTestAllDataframe(df,0.7)
-        x_train = train.drop(['ActivityLabel', 'Address'],axis=1)
-        y_train = train['ActivityLabel']
+        # df = pd.DataFrame(objData.values())
+        # df = df.fillna(0)
+        # train, test = splitTestAllDataframe(df,0.7)
+        # x_train = train.drop(['ActivityLabel', 'Address'],axis=1)
+        # y_train = train['ActivityLabel']
 
-        x_test = test.drop(['ActivityLabel', 'Address'],axis=1)
-        y_test = test['ActivityLabel']
+        # x_test = test.drop(['ActivityLabel', 'Address'],axis=1)
+        # y_test = test['ActivityLabel']
         
-        ml.modelling(x_train, y_train, 'knn')
-        predictionResult = ml.classification(x_test, 'knn')
-        print(predictionResult)
-        ml.evaluation(ctx, y_test, predictionResult, 'knn')
+        # ml.modelling(x_train, y_train, 'knn')
+        # predictionResult = ml.classification(x_test, 'knn')
+        # print(predictionResult)
+        # ml.evaluation(ctx, y_test, predictionResult, 'knn')
 
   ##### loop all dataset
 

@@ -1,4 +1,5 @@
 import numpy as np
+from helpers.utilities.watcher import *
 
 def addNodeFromIp(G, arrayOfIp):
     for element in arrayOfIp:
@@ -24,15 +25,17 @@ def generator(G, df):
         G.add_edge(row['SrcAddr'],row['DstAddr'], weight=weight)
 
 def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Packet transmitted
+    ctx = 'Graph based analysis - Generator'
+    start = watcherStart(ctx)
     edges = []
     objAddress = {}
     
-    columns_of_interest = ['SrcAddr', 'Proto', 'Sport']
+    columns_of_interest = ['SrcAddr', 'Proto']
     subset_df = df[columns_of_interest]
     unique_combinations = subset_df.drop_duplicates()
     listSrcAddress = [tuple(x) for x in unique_combinations.values]
 
-    dst_columns_of_interest = ['DstAddr', 'Proto', 'Dport']
+    dst_columns_of_interest = ['DstAddr', 'Proto']
     dst_subset_df = df[dst_columns_of_interest]
     dst_unique_combinations = dst_subset_df.drop_duplicates()
     listDstAddress = [tuple(x) for x in dst_unique_combinations.values]
@@ -40,31 +43,24 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
     #start generating graph
     addNodeFromIp(G, listSrcAddress)
     addNodeFromIp(G, listDstAddress)
-
     for index, row in df.iterrows():
-        addressName = str((row['SrcAddr'],row['Proto'],row['Sport']))+'-'+str((row['DstAddr'],row['Proto'],row['Dport']))
-        bytes = row['SrcBytes']
+        addressName = row['SrcAddr']+row['Proto']+'-'+row['DstAddr']+row['Proto']
 
         if addressName in objAddress:
-            objAddress[addressName].append(bytes)
+            objAddress[addressName] += 1
         else:
-            objAddress[addressName] = [bytes]
+            objAddress[addressName] = 1
 
     for index, row in df.iterrows():
-        addressName = str((row['SrcAddr'],row['Proto'],row['Sport']))+'-'+str((row['DstAddr'],row['Proto'],row['Dport']))
-        array = np.array(objAddress[addressName])
+        addressName = row['SrcAddr']+row['Proto']+'-'+row['DstAddr']+row['Proto']
         
-        intensity = len(array)
-        cv = ( np.std(array)/np.mean(array) )* 100
-        mean = sum(objAddress[addressName]) / len(objAddress[addressName])
-        median = np.median(array)
-        sumValue = sum(objAddress[addressName])
-
-        weight = (intensity, sumValue, mean, median, cv)
-        source = (row['SrcAddr'],row['Proto'],row['Sport'])
-        dest = (row['DstAddr'],row['Proto'],row['Dport'])
+        weight = objAddress[addressName]
+        source = (row['SrcAddr'],row['Proto'])
+        dest = (row['DstAddr'],row['Proto'])
 
         if (source,dest,weight) not in edges:
             edges.append((source,dest,weight))
 
     G.add_weighted_edges_from(edges)
+    
+    watcherEnd(ctx, start)
