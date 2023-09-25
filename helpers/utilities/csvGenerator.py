@@ -62,13 +62,18 @@ def exportWithObject(object, fileName):
 def exportWithArrayOfObject(arrayObject, fileName):
   ctx= 'Export data to: '+fileName
   start= watcherStart(ctx)
+  
+  field_names = arrayObject[0].keys()
+  with open(fileName, 'a', newline='') as csv_file:
+    obj = csv.DictWriter(csv_file, fieldnames=field_names)
+    obj.writeheader()
 
   for object in arrayObject:
     # list of column names 
     field_names = object.keys()
 
     with open(fileName, 'a', newline='') as csv_file:
-      dict_object = csv.DictWriter(csv_file, fieldnames=field_names) 
+      dict_object = csv.DictWriter(csv_file, fieldnames=field_names)
       dict_object.writerow(object)
 
   watcherEnd(ctx, start)

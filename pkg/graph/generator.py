@@ -26,15 +26,23 @@ def generator(G, df):
 def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Packet transmitted
     edges = []
     objAddress = {}
-    listSrcAddress = df['SrcAddr'].unique()
-    listDstAddress = df['DstAddr'].unique()
+    
+    columns_of_interest = ['SrcAddr', 'Proto', 'Sport']
+    subset_df = df[columns_of_interest]
+    unique_combinations = subset_df.drop_duplicates()
+    listSrcAddress = [tuple(x) for x in unique_combinations.values]
+
+    dst_columns_of_interest = ['DstAddr', 'Proto', 'Dport']
+    dst_subset_df = df[dst_columns_of_interest]
+    dst_unique_combinations = dst_subset_df.drop_duplicates()
+    listDstAddress = [tuple(x) for x in dst_unique_combinations.values]
     
     #start generating graph
     addNodeFromIp(G, listSrcAddress)
     addNodeFromIp(G, listDstAddress)
 
     for index, row in df.iterrows():
-        addressName = row['SrcAddr']+'-'+row['DstAddr']
+        addressName = str((row['SrcAddr'],row['Proto'],row['Sport']))+'-'+str((row['DstAddr'],row['Proto'],row['Dport']))
         bytes = row['SrcBytes']
 
         if addressName in objAddress:
@@ -43,7 +51,7 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
             objAddress[addressName] = [bytes]
 
     for index, row in df.iterrows():
-        addressName = row['SrcAddr']+'-'+row['DstAddr']
+        addressName = str((row['SrcAddr'],row['Proto'],row['Sport']))+'-'+str((row['DstAddr'],row['Proto'],row['Dport']))
         array = np.array(objAddress[addressName])
         
         intensity = len(array)
@@ -53,8 +61,10 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
         sumValue = sum(objAddress[addressName])
 
         weight = (intensity, sumValue, mean, median, cv)
+        source = (row['SrcAddr'],row['Proto'],row['Sport'])
+        dest = (row['DstAddr'],row['Proto'],row['Dport'])
 
-        if (row['SrcAddr'],row['DstAddr'],weight) not in edges:
-            edges.append((row['SrcAddr'],row['DstAddr'],weight))
+        if (source,dest,weight) not in edges:
+            edges.append((source,dest,weight))
 
     G.add_weighted_edges_from(edges)

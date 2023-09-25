@@ -30,44 +30,65 @@ def dftoGraph(datasetDetail):
     # print(listBotnetAddress)
     listNormalAddress = normal['SrcAddr'].unique()
 
+    raw_df = raw_df.fillna('-')
     G = nx.DiGraph(directed=True)
     generatorWithEdgesArray(G, raw_df)
 
     objData = {}
     for node in G.nodes():
-        obj={}
         label = 'botnet'
         activityLabel = 1
         if node not in listBotnetAddress:
             label = 'normal'
             activityLabel = 0
         
-        obj['Address'] = node
-        obj['OutDegree'] = G.out_degree(node)
-        obj['InDegree'] = G.in_degree(node)
+        obj={
+            'Address' : node[0],
+            'Proto': node[1],
+            'Sport': node[2],
+
+            'IntensityOutDegree': 0,
+            'SumSentBytes': 0,
+            'MeanSentBytes': 0,
+            'MedSentBytes': 0,
+            'CVSentBytes': 0,
+
+            'IntensityInDegree': 0,
+            'SumReceivedBytes': 0,
+            'MeanReceivedBytes': 0,
+            'MedReceivedBytes': 0,
+            'CVReceivedBytes': 0,
+
+            'Label': label,
+            'ActivityLabel': activityLabel
+        }
 
         out_edges = G.out_edges(node, data=True)
-        for edge in out_edges:
-           obj['IntensityOutDegree'] = edge[2]['weight'][0]
-           obj['SumSentBytes'] = edge[2]['weight'][1]
-           obj['MeanSentBytes'] = edge[2]['weight'][2]
-           obj['MedSentBytes'] = edge[2]['weight'][3]
-           obj['CVSentBytes'] = edge[2]['weight'][4]
-
+        for o_edge in out_edges:       
+           obj['IntensityOutDegree'] = o_edge[2]['weight'][0]
+           obj['SumSentBytes'] = o_edge[2]['weight'][1]
+           obj['MeanSentBytes'] = o_edge[2]['weight'][2]
+           obj['MedSentBytes'] = o_edge[2]['weight'][3]
+           obj['CVSentBytes'] = o_edge[2]['weight'][4]
 
         in_edges = G.in_edges(node, data=True)
-        for edge in in_edges:
-           obj['IntensityInDegree'] = edge[2]['weight'][0]
-           obj['SumReceivedBytes'] = edge[2]['weight'][1]
-           obj['MeanReceivedBytes'] = edge[2]['weight'][2]
-           obj['MedReceivedBytes'] = edge[2]['weight'][3]
-           obj['CVReceivedBytes'] = edge[2]['weight'][4]
+        for i_edge in in_edges:
+           obj['IntensityInDegree'] = i_edge[2]['weight'][0]
+           obj['SumReceivedBytes'] = i_edge[2]['weight'][1]
+           obj['MeanReceivedBytes'] = i_edge[2]['weight'][2]
+           obj['MedReceivedBytes'] = i_edge[2]['weight'][3]
+           obj['CVReceivedBytes'] = i_edge[2]['weight'][4]
 
-
+        obj['OutDegree'] = G.out_degree(node)
+        obj['InDegree'] = G.in_degree(node)
+        obj['Address'] = node[0]
+        obj['Proto'] = node[1]
+        obj['Sport'] = node[2]
         obj['Label'] = label
         obj['ActivityLabel'] = activityLabel
+        
         objData[node] = obj
-    
+
     filename = 'collections/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'.csv'
     exportWithArrayOfObject(list(objData.values()), filename)
 
