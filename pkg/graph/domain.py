@@ -23,11 +23,21 @@ def graphToTabular(G, raw_df):
     raw_df['ActivityLabel'] = raw_df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
     botnet = raw_df['ActivityLabel'] == 1
     botnet_df = raw_df[botnet]
-    normal = raw_df['ActivityLabel'] == 0
-    normal_df = raw_df[normal]
     listBotnetAddress = botnet_df['SrcAddr'].unique()
-    listNormalAddress = normal_df['SrcAddr'].unique()
+
+    # normal = raw_df['ActivityLabel'] == 0
+    # normal_df = raw_df[normal]
+    # listNormalAddress = normal_df['SrcAddr'].unique()
     
+    result_src_df = raw_df.groupby(['SrcAddr', 'Proto'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    result_dst_df = raw_df.groupby(['DstAddr', 'Proto'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    result_src_df = result_src_df.fillna(0)
+    result_dst_df = result_dst_df.fillna(0)
+    # result_df.columns = ['SrcAddr', 'Proto', 'mean', 'SrcBytes_std', 'SrcBytes_median', 'SrcBytes_sum']
+    # print(result_df)
+    # specific_row = result_df.loc[(result_df['SrcAddr'] == '1.112.136.153') & (result_df['Proto'] == 'udp')]
+    # print(specific_row['mean'].values[0])
+
     objData = {}
     totalNodes = G.number_of_nodes()
     progress_bar = tqdm(total=totalNodes, desc="Processing", unit="item")
@@ -38,31 +48,46 @@ def graphToTabular(G, raw_df):
             label = 'normal'
             activityLabel = 0
         
-        out_data = raw_df[raw_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([node])]
-        out_srcDesc = out_data['SrcBytes'].describe()
-        in_data = raw_df[raw_df[['DstAddr','Proto']].apply(tuple, axis=1).isin([node])]
-        in_srcDesc = in_data['SrcBytes'].describe()
+        # out_data = raw_df[raw_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([node])]
+        # out_srcDesc = out_data['SrcBytes'].describe()
+        # in_data = raw_df[raw_df[['DstAddr','Proto']].apply(tuple, axis=1).isin([node])]
+        # in_srcDesc = in_data['SrcBytes'].describe()
+        out_data = result_src_df.loc[(result_src_df['SrcAddr'] == node[0]) & (result_src_df['Proto'] == node[1])]
+        in_data = result_dst_df.loc[(result_dst_df['DstAddr'] == node[0]) & (result_dst_df['Proto'] == node[1])]
+
         obj={
             'Address' : node[0],
             'Proto': node[1],
 
             'OutDegree': G.out_degree(node),
             'IntensityOutDegree': G.out_degree(node, weight='weight'),
-            'SumSentBytes': out_data['SrcBytes'].sum(),
-            'MeanSentBytes': out_srcDesc['mean'],
-            'MedSentBytes': out_srcDesc['50%'],
-            'CVSentBytes': (out_srcDesc['std']/out_srcDesc['mean'])*100,
+            'SumSentBytes': 0,
+            'MeanSentBytes': 0,
+            'MedSentBytes': 0,
+            'CVSentBytes': 0,
 
             'InDegree': G.in_degree(node),
             'IntensityInDegree': G.in_degree(node, weight='weight'),
-            'SumReceivedBytes': in_data['SrcBytes'].sum(),
-            'MeanReceivedBytes': in_srcDesc['mean'],
-            'MedReceivedBytes': in_srcDesc['50%'],
-            'CVReceivedBytes': (in_srcDesc['std']/in_srcDesc['mean'])*100,
+            'SumReceivedBytes': 0,
+            'MeanReceivedBytes': 0,
+            'MedReceivedBytes': 0,
+            'CVReceivedBytes': 0,
 
             'Label': label,
             'ActivityLabel': activityLabel
         }
+
+        if(len(out_data) > 0):
+            obj['SumSentBytes'] = out_data['sum'].values[0]
+            obj['MeanSentBytes'] = out_data['mean'].values[0]
+            obj['MedSentBytes'] = out_data['median'].values[0]
+            obj['CVSentBytes'] = (out_data['std'].values[0]/out_data['mean'].values[0])*100
+
+        if(len(in_data) > 0):
+            obj['SumReceivedBytes'] = in_data['sum'].values[0]
+            obj['MeanReceivedBytes'] = in_data['mean'].values[0]
+            obj['MedReceivedBytes'] = in_data['median'].values[0]
+            obj['CVReceivedBytes'] = (in_data['std'].values[0]/in_data['mean'].values[0])*100
         
         objData[node] = obj
         time.sleep(0.1)  # Simulate work with a delay
