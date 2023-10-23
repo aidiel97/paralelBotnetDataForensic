@@ -158,3 +158,58 @@ def singleData():
     
     datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
     miner.methodEvaluation(datasetName, raw_df, new_df, algo)
+
+def spamClassification():
+  ctx='Machine learning Classification - Single Data'
+  start = watcherStart(ctx)
+
+  ##### single subDataset
+  datasetDetail={
+    'datasetName': ncc,
+    'stringDatasetName': 'ncc',
+    'selected': 'scenario9'
+  }
+  ##### with input menu
+  # datasetName, stringDatasetName, selected = datasetMenu.getData()
+  ##### with input menu
+  raw_df = loader.binetflow(
+    datasetDetail['datasetName'],
+    datasetDetail['selected'],
+    datasetDetail['stringDatasetName'])
+
+  print('\n'+datasetDetail['stringDatasetName'])
+  print(datasetDetail['selected'])
+
+  df = raw_df.copy() #get a copy from dataset to prevent processed data
+  df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
+  
+  bot_df = df[df['ActivityLabel'] == 1]
+  print(bot_df['Label'].unique())
+
+  exit()
+  for algo in list(ml.algorithmDict.keys()):
+    ##### single subDataset
+    datasetDetail={
+      'datasetName': ncc2,
+      'stringDatasetName': 'ncc2',
+      'selected': 'scenario3'
+    }
+    ##### with input menu
+    # datasetName, stringDatasetName, selected = datasetMenu.getData()
+    ##### with input menu
+    raw_df = loader.binetflow(
+      datasetDetail['datasetName'],
+      datasetDetail['selected'],
+      datasetDetail['stringDatasetName'])
+
+    print('\n'+datasetDetail['stringDatasetName'])
+    print(datasetDetail['selected'])
+
+    df = raw_df.copy() #get a copy from dataset to prevent processed data
+    print(df)
+    # result = predict(df, algo)
+    # raw_df['predictionResult'] = result
+    # new_df = raw_df[raw_df['predictionResult'] == 1]
+    
+    # datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
+    # miner.methodEvaluation(datasetName, raw_df, new_df, algo)

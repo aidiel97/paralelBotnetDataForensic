@@ -1,10 +1,11 @@
-from helpers.common.globalConfig import DATASET_LOCATION, CTU_DIR, NCC_DIR, NCC2_DIR, DEFAULT_MACHINE_LEARNING_TRAIN_PROPORTION
+from helpers.common.globalConfig import DATASET_LOCATION, CTU_DIR, NCC_DIR, NCC2_DIR, NCC_GRAPH_DIR, DEFAULT_MACHINE_LEARNING_TRAIN_PROPORTION
 
 defaultTrainProportion = DEFAULT_MACHINE_LEARNING_TRAIN_PROPORTION
 datasetLocation = DATASET_LOCATION
 ctuLoc = CTU_DIR
 nccLoc = NCC_DIR
 ncc2Loc = NCC2_DIR
+nccGraphLoc = NCC_GRAPH_DIR
 
 ctuPcap = {
   'scenario1': datasetLocation+ctuLoc+'/1/botnet-capture-20110810-neris.pcap',
@@ -79,6 +80,22 @@ ncc2 = {
 
 ncc2AllScenarios = {
   'scenario1': datasetLocation+ncc2Loc+'/all-sensors/sensors-all.binetflow',
+}
+
+nccGraphCTU = {
+    'scenario1' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario1.csv',
+    'scenario2' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario2.csv',
+    'scenario3' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario3.csv',
+    'scenario4' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario4.csv',
+    'scenario5' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario5.csv',
+    'scenario6' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario6.csv',
+    'scenario7' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario7.csv',
+    'scenario8' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario8.csv',
+    'scenario9' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario9.csv',
+    'scenario10' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario10.csv',
+    'scenario11' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario11.csv',
+    'scenario12' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario12.csv',
+    'scenario13' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario13.csv',
 }
 
 listAvailableDatasets=[

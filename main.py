@@ -15,6 +15,7 @@ import pkg.graph.domain as grp
 if __name__ == "__main__":
   listMenu = [
     ('Generate Machine Learning Models', ml.modellingWithCTU),
+    ('Graph Classification [Modeling]', grp.graphClassificationModelling),
     ('[Single Dataset] Graph Dataset Generator', grp.singleData),
     ('[Test All Dataset] Graph Dataset Generator', grp.executeAllData),
     ('[Single Dataset]Test Machine Learning Models', ml.singleData),
@@ -30,5 +31,6 @@ if __name__ == "__main__":
     ('Export Binetflow Dataset', analysis.exportDataset),
     ('Export All Categorical Feature Unique', analysis.exportAllCategoricalFetureUnique),
     ('Network Actor Analysis', analysis.networkActor),
+    ('SPAM Classification', ml.spamClassification),
   ]
   cli.menu(listMenu)

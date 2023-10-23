@@ -127,6 +127,70 @@ def dftoGraph(datasetDetail):
     return objData
 
 
+def graphClassificationModelling():
+    ctx = 'Graph based classification - Modelling'
+    start = watcherStart(ctx)
+
+    
+    keysAlg = list(ml.algorithmDict.keys())
+    print("Choose one of this algorithm to train :")
+    
+    i=1
+    for alg in keysAlg:
+        print(str(i)+". "+alg)
+        i+=1
+    
+    indexAlg = input("Enter Menu: ")
+    algorithm = keysAlg[int(indexAlg)-1]
+
+    #modelling
+    #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
+    trainDataset = ['scenario3','scenario4','scenario5','scenario7','scenario10','scenario11','scenario12','scenario13']
+    arrayDf = []
+    datasetName = nccGraphCTU
+    stringDatasetName = 'nccGraphCTU'
+    for selected in trainDataset:
+        arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
+    df = pd.concat(arrayDf, axis=0)
+    df.reset_index(drop=True, inplace=True)
+
+    for col in protoDict.keys():
+        df[col] = (df['Proto'] == col).astype(int)
+
+    df['CVReceivedBytes'] = df['CVReceivedBytes'].fillna(0)
+    df['CVSentBytes'] = df['CVSentBytes'].fillna(0)
+    
+    categorical_features=[feature for feature in df.columns if (
+        df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
+    )]
+    x = df.drop(categorical_features,axis=1)
+    y = df['ActivityLabel']
+
+    from sklearn.decomposition import PCA
+    pca = PCA().fit(x)
+    plt.plot(pca.explained_variance_ratio_.cumsum(), lw=3, color='#087E8B')
+    plt.title('Cumulative explained variance by number of principal components', size=20)
+    plt.savefig('collections/pca.png', bbox_inches='tight')
+    
+    loadings = pd.DataFrame(
+        data=pca.components_.T * np.sqrt(pca.explained_variance_), 
+        columns=[f'PC{i}' for i in range(1, len(x.columns) + 1)],
+        index=x.columns
+    )
+    loadings.head()
+    pc1_loadings = loadings.sort_values(by='PC1', ascending=False)[['PC1']]
+    pc1_loadings = pc1_loadings.reset_index()
+    pc1_loadings.columns = ['Attribute', 'CorrelationWithPC1']
+
+    plt.bar(x=pc1_loadings['Attribute'], height=pc1_loadings['CorrelationWithPC1'], color='#087E8B')
+    plt.title('PCA loading scores (first principal component)', size=20)
+    plt.xticks(rotation='vertical')
+    plt.savefig('collections/pca-loadingScores.png', bbox_inches='tight')
+
+    ml.modelling(x, y, algorithm)
+
+    watcherEnd(ctx, start)
+
 def singleData():
     ctx = 'Graph based analysis - Single Dataset'
     start = watcherStart(ctx)
@@ -197,8 +261,3 @@ def executeAllData():
   ##### loop all dataset
 
   watcherEnd(ctx, start)
-
-
-    
-
-
