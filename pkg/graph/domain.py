@@ -30,8 +30,8 @@ def graphToTabular(G, raw_df):
     # normal_df = raw_df[normal]
     # listNormalAddress = normal_df['SrcAddr'].unique()
     
-    result_src_df = raw_df.groupby(['SrcAddr', 'Proto'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
-    result_dst_df = raw_df.groupby(['DstAddr', 'Proto'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    result_src_df = raw_df.groupby(['SrcAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    result_dst_df = raw_df.groupby(['DstAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     result_src_df = result_src_df.fillna(0)
     result_dst_df = result_dst_df.fillna(0)
     # result_df.columns = ['SrcAddr', 'Proto', 'mean', 'SrcBytes_std', 'SrcBytes_median', 'SrcBytes_sum']
@@ -53,12 +53,12 @@ def graphToTabular(G, raw_df):
         # out_srcDesc = out_data['SrcBytes'].describe()
         # in_data = raw_df[raw_df[['DstAddr','Proto']].apply(tuple, axis=1).isin([node])]
         # in_srcDesc = in_data['SrcBytes'].describe()
-        out_data = result_src_df.loc[(result_src_df['SrcAddr'] == node[0]) & (result_src_df['Proto'] == node[1])]
-        in_data = result_dst_df.loc[(result_dst_df['DstAddr'] == node[0]) & (result_dst_df['Proto'] == node[1])]
+        out_data = result_src_df.loc[result_src_df['SrcAddr'] == node[0]]
+        in_data = result_dst_df.loc[result_dst_df['DstAddr'] == node[0]]
 
         obj={
             'Address' : node[0],
-            'Proto': node[1],
+            # 'Proto': node[1],
 
             'OutDegree': G.out_degree(node),
             'IntensityOutDegree': G.out_degree(node, weight='weight'),
