@@ -12,9 +12,10 @@ from helpers.common.main import *
 from helpers.utilities.dataLoader import splitTestAllDataframe
 from helpers.utilities.database import *
 from helpers.utilities.csvGenerator import exportWithArrayOfObject
-
 from pkg.graph.models import *
 from pkg.graph.generator import *
+
+from sklearn.preprocessing import StandardScaler  
 
 def graphToTabular(G, raw_df):
     ctx = 'Graph based analysis - Graph to Tabular'
@@ -163,29 +164,32 @@ def graphClassificationModelling():
     categorical_features=[feature for feature in df.columns if (
         df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
     )]
-    x = df.drop(categorical_features,axis=1)
     y = df['ActivityLabel']
+    x = df.drop(categorical_features,axis=1)
+    scaler = StandardScaler()
+    scaler.fit(x)
+    x = scaler.transform(x)
 
-    from sklearn.decomposition import PCA
-    pca = PCA().fit(x)
-    plt.plot(pca.explained_variance_ratio_.cumsum(), lw=3, color='#087E8B')
-    plt.title('Cumulative explained variance by number of principal components', size=20)
-    plt.savefig('collections/pca.png', bbox_inches='tight')
+    # from sklearn.decomposition import PCA
+    # pca = PCA().fit(x)
+    # plt.plot(pca.explained_variance_ratio_.cumsum(), lw=3, color='#087E8B')
+    # plt.title('Cumulative explained variance by number of principal components', size=20)
+    # plt.savefig('collections/pca.png', bbox_inches='tight')
     
-    loadings = pd.DataFrame(
-        data=pca.components_.T * np.sqrt(pca.explained_variance_), 
-        columns=[f'PC{i}' for i in range(1, len(x.columns) + 1)],
-        index=x.columns
-    )
-    loadings.head()
-    pc1_loadings = loadings.sort_values(by='PC1', ascending=False)[['PC1']]
-    pc1_loadings = pc1_loadings.reset_index()
-    pc1_loadings.columns = ['Attribute', 'CorrelationWithPC1']
+    # loadings = pd.DataFrame(
+    #     data=pca.components_.T * np.sqrt(pca.explained_variance_), 
+    #     columns=[f'PC{i}' for i in range(1, len(x.columns) + 1)],
+    #     index=x.columns
+    # )
+    # loadings.head()
+    # pc1_loadings = loadings.sort_values(by='PC1', ascending=False)[['PC1']]
+    # pc1_loadings = pc1_loadings.reset_index()
+    # pc1_loadings.columns = ['Attribute', 'CorrelationWithPC1']
 
-    plt.bar(x=pc1_loadings['Attribute'], height=pc1_loadings['CorrelationWithPC1'], color='#087E8B')
-    plt.title('PCA loading scores (first principal component)', size=20)
-    plt.xticks(rotation='vertical')
-    plt.savefig('collections/pca-loadingScores.png', bbox_inches='tight')
+    # plt.bar(x=pc1_loadings['Attribute'], height=pc1_loadings['CorrelationWithPC1'], color='#087E8B')
+    # plt.title('PCA loading scores (first principal component)', size=20)
+    # plt.xticks(rotation='vertical')
+    # plt.savefig('collections/pca-loadingScores.png', bbox_inches='tight')
 
     ml.modelling(x, y, algorithm)
 
