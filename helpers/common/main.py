@@ -98,6 +98,28 @@ nccGraphCTU = {
     'scenario13' : datasetLocation+nccGraphLoc+'/CTU-13 (Local Source)-scenario13.csv',
 }
 
+nccGraphNCC = {
+    'scenario1' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario1.csv',
+    'scenario2' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario2.csv',
+    'scenario3' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario3.csv',
+    'scenario4' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario4.csv',
+    'scenario5' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario5.csv',
+    'scenario6' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario6.csv',
+    'scenario7' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario7.csv',
+    'scenario8' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario8.csv',
+    'scenario9' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario9.csv',
+    'scenario10' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario10.csv',
+    'scenario11' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario11.csv',
+    'scenario12' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario12.csv',
+    'scenario13' : datasetLocation+nccGraphLoc+'/NCC (Periodic Botnet)-scenario13.csv',
+}
+
+nccGraphNCC2 = {
+    'scenario1' : datasetLocation+nccGraphLoc+'/NCC-2 (Simultaneous Botnet)-scenario1.csv',
+    'scenario2' : datasetLocation+nccGraphLoc+'/NCC-2 (Simultaneous Botnet)-scenario2.csv',
+    'scenario3' : datasetLocation+nccGraphLoc+'/NCC-2 (Simultaneous Botnet)-scenario3.csv',
+}
+
 listAvailableDatasets=[
   {
     'name':'NCC (Periodic Botnet)',

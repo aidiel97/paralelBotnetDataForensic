@@ -154,12 +154,14 @@ def graphClassificationModelling():
         arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
     df = pd.concat(arrayDf, axis=0)
     df.reset_index(drop=True, inplace=True)
+    botIP = ['147.32.84.165', '147.32.84.191', '147.32.84.192', '147.32.84.193', '147.32.84.204', '147.32.84.205', '147.32.84.206', '147.32.84.207', '147.32.84.208', '147.32.84.209']
 
     for col in protoDict.keys():
         df[col] = (df['Proto'] == col).astype(int)
 
     df['CVReceivedBytes'] = df['CVReceivedBytes'].fillna(0)
     df['CVSentBytes'] = df['CVSentBytes'].fillna(0)
+    df['ActivityLabel'] = df['Address'].isin(botIP).astype(int)
     
     categorical_features=[feature for feature in df.columns if (
         df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
@@ -192,6 +194,24 @@ def graphClassificationModelling():
     # plt.savefig('collections/pca-loadingScores.png', bbox_inches='tight')
 
     ml.modelling(x, y, algorithm)
+    
+    test_df = loader.binetflow(nccGraphCTU, 'scenario9', 'nccGraphCTU')
+    test_df['ActivityLabel'] = test_df['Address'].isin(botIP).astype(int)
+    
+    for col in protoDict.keys():
+        test_df[col] = (test_df['Proto'] == col).astype(int)
+
+    test_df['CVReceivedBytes'] = test_df['CVReceivedBytes'].fillna(0)
+    test_df['CVSentBytes'] = test_df['CVSentBytes'].fillna(0)
+
+    y_test = test_df['ActivityLabel']
+    x_test = test_df.drop(categorical_features,axis=1)
+    scaler = StandardScaler()
+    scaler.fit(x_test)
+    x_test = scaler.transform(x_test)
+
+    predict_result = ml.classification(x_test, algorithm)
+    ml.evaluation(ctx, y_test, predict_result, algorithm)
 
     watcherEnd(ctx, start)
 
