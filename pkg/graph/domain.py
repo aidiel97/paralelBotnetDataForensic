@@ -6,6 +6,7 @@ import time
 import helpers.utilities.dataLoader as loader
 import pkg.preProcessing.transform as pp
 import pkg.machineLearning.machineLearning as ml
+import interfaces.cli.dataset as datasetMenu
 
 from helpers.utilities.watcher import *
 from helpers.common.main import *
@@ -15,29 +16,47 @@ from helpers.utilities.csvGenerator import exportWithArrayOfObject
 from pkg.graph.models import *
 from pkg.graph.generator import *
 
-from sklearn.preprocessing import StandardScaler  
+from sklearn.preprocessing import StandardScaler 
 
 def graphToTabular(G, raw_df):
     ctx = 'Graph based analysis - Graph to Tabular'
     start = watcherStart(ctx)
 
-    raw_df['ActivityLabel'] = raw_df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
-    botnet = raw_df['ActivityLabel'] == 1
-    botnet_df = raw_df[botnet]
+    # raw_df['ActivityLabel'] = raw_df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
+    # botnet = raw_df['ActivityLabel'] == 1
+    # botnet_df = raw_df[botnet]
+    raw_df['Unix'] = raw_df['StartTime'].apply(pp.timeToUnix).fillna(0)
+    raw_df = raw_df.sort_values(by=['Unix'])
+    raw_df['Diff'] = raw_df['Unix'].diff().apply(lambda x: x if x >= 0 else None) #calculate diff with before event, negative convert to 0
     listBotnetAddress = ['147.32.84.165', '147.32.84.191', '147.32.84.192', '147.32.84.193', '147.32.84.204', '147.32.84.205', '147.32.84.206', '147.32.84.207', '147.32.84.208', '147.32.84.209']
 
     # normal = raw_df['ActivityLabel'] == 0
     # normal_df = raw_df[normal]
     # listNormalAddress = normal_df['SrcAddr'].unique()
     
+    #group by sourcebytes
     result_src_df = raw_df.groupby(['SrcAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     result_dst_df = raw_df.groupby(['DstAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     result_src_df = result_src_df.fillna(0)
     result_dst_df = result_dst_df.fillna(0)
-    # result_df.columns = ['SrcAddr', 'Proto', 'mean', 'SrcBytes_std', 'SrcBytes_median', 'SrcBytes_sum']
-    # print(result_df)
-    # specific_row = result_df.loc[(result_df['SrcAddr'] == '1.112.136.153') & (result_df['Proto'] == 'udp')]
-    # print(specific_row['mean'].values[0])
+
+    #group by dur
+    dur_src_df = raw_df.groupby(['SrcAddr'])['Dur'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    dur_dst_df = raw_df.groupby(['DstAddr'])['Dur'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    dur_src_df = dur_src_df.fillna(0)
+    dur_dst_df = dur_dst_df.fillna(0)
+    
+    #group by diff
+    diff_src_df = raw_df.groupby(['SrcAddr'])['Diff'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    diff_dst_df = raw_df.groupby(['DstAddr'])['Diff'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    diff_src_df = diff_src_df.fillna(0)
+    diff_dst_df = diff_dst_df.fillna(0)
+    
+    #group by unix timestamp
+    unix_src_df = raw_df.groupby(['SrcAddr'])['Unix'].agg(['min', 'max']).reset_index()
+    unix_dst_df = raw_df.groupby(['DstAddr'])['Unix'].agg(['min', 'max']).reset_index()
+    unix_src_df = unix_src_df.fillna(0)
+    unix_dst_df = unix_dst_df.fillna(0)
 
     objData = {}
     totalNodes = G.number_of_nodes()
@@ -56,6 +75,15 @@ def graphToTabular(G, raw_df):
         out_data = result_src_df.loc[result_src_df['SrcAddr'] == node[0]]
         in_data = result_dst_df.loc[result_dst_df['DstAddr'] == node[0]]
 
+        dur_out_data = dur_src_df.loc[dur_src_df['SrcAddr'] == node[0]]
+        dur_in_data = dur_dst_df.loc[dur_dst_df['DstAddr'] == node[0]]
+        
+        diff_out_data = diff_src_df.loc[diff_src_df['SrcAddr'] == node[0]]
+        diff_in_data = diff_dst_df.loc[diff_dst_df['DstAddr'] == node[0]]
+
+        unix_out_data = unix_src_df.loc[unix_src_df['SrcAddr'] == node[0]]
+        unix_in_data = unix_dst_df.loc[unix_dst_df['DstAddr'] == node[0]]
+
         obj={
             'Address' : node[0],
             # 'Proto': node[1],
@@ -64,20 +92,43 @@ def graphToTabular(G, raw_df):
             'IntensityOutDegree': G.out_degree(node, weight='weight'),
             'SumSentBytes': 0,
             'MeanSentBytes': 0,
-            'MedSentBytes': 0,
+            'MedianSentBytes': 0,
+            'StdSentBytes': 0,
             'CVSentBytes': 0,
+            'OutSumDur': 0,
+            'OutMeanDur': 0,
+            'OutMedianDur': 0,
+            'OutStdDur': 0,
+            'OutSumDiffTime': 0,
+            'OutMeanDiffTime': 0,
+            'OutMedianDiffTime': 0,
+            'OutStdDiffTime': 0,
+            'OutStartTime': 0,
+            'OutEndTime': 0,
 
             'InDegree': G.in_degree(node),
             'IntensityInDegree': G.in_degree(node, weight='weight'),
             'SumReceivedBytes': 0,
             'MeanReceivedBytes': 0,
-            'MedReceivedBytes': 0,
+            'MedianReceivedBytes': 0,
+            'StdReceivedBytes': 0,
             'CVReceivedBytes': 0,
+            'InSumDur': 0,
+            'InMeanDur': 0,
+            'InMedianDur': 0,
+            'InStdDur': 0,
+            'InSumDiffTime': 0,
+            'InMeanDiffTime': 0,
+            'InMedianDiffTime': 0,
+            'InStdDiffTime': 0,
+            'InStartTime': 0,
+            'InEndTime': 0,
 
             'Label': label,
             'ActivityLabel': activityLabel
         }
-
+        
+        #srcBytes
         if(len(out_data) > 0):
             obj['SumSentBytes'] = out_data['sum'].values[0]
             obj['MeanSentBytes'] = out_data['mean'].values[0]
@@ -89,6 +140,41 @@ def graphToTabular(G, raw_df):
             obj['MeanReceivedBytes'] = in_data['mean'].values[0]
             obj['MedReceivedBytes'] = in_data['median'].values[0]
             obj['CVReceivedBytes'] = (in_data['std'].values[0]/in_data['mean'].values[0])*100
+
+        #dur
+        if(len(dur_out_data) > 0):
+            obj['OutSumDur'] = dur_out_data['sum'].values[0]
+            obj['OutMeanDur'] = dur_out_data['mean'].values[0]
+            obj['OutMedianDur'] = dur_out_data['median'].values[0]
+            obj['OutStdDur'] = dur_out_data['std'].values[0]
+            
+        if(len(dur_in_data) > 0):
+            obj['InSumDur'] = dur_in_data['sum'].values[0]
+            obj['InMeanDur'] = dur_in_data['mean'].values[0]
+            obj['InMedianDur'] = dur_in_data['median'].values[0]
+            obj['InStdDur'] = dur_in_data['std'].values[0]
+
+        #diff
+        if(len(diff_out_data) > 0):
+            obj['OutSumDiffTime'] = diff_out_data['sum'].values[0]
+            obj['OutMeanDiffTime'] = diff_out_data['mean'].values[0]
+            obj['OutMedianDiffTime'] = diff_out_data['median'].values[0]
+            obj['OutStdDiffTime'] = diff_out_data['std'].values[0]
+            
+        if(len(diff_in_data) > 0):
+            obj['InSumDiffTime'] = diff_in_data['sum'].values[0]
+            obj['InMeanDiffTime'] = diff_in_data['mean'].values[0]
+            obj['InMedianDiffTime'] = diff_in_data['median'].values[0]
+            obj['InStdDiffTime'] = diff_in_data['std'].values[0]
+            
+        #diff
+        if(len(unix_out_data) > 0):
+            obj['OutStartTime'] = unix_out_data['min'].values[0]
+            obj['OutEndTime'] = unix_out_data['max'].values[0]
+            
+        if(len(unix_in_data) > 0):
+            obj['InStartTime'] = unix_in_data['min'].values[0]
+            obj['InEndTime'] = unix_in_data['max'].values[0]
         
         objData[node] = obj
         time.sleep(0.1)  # Simulate work with a delay
@@ -219,14 +305,20 @@ def singleData():
     ctx = 'Graph based analysis - Single Dataset'
     start = watcherStart(ctx)
     ##### single subDataset
+    # datasetDetail = {
+    #     'datasetName': ncc2,
+    #     'stringDatasetName': 'ncc2',
+    #     'selected': 'scenario3'
+    # }
+    ##### with input menu
+    datasetName, stringDatasetName, selected = datasetMenu.getData()
+    ##### with input menu
+    
     datasetDetail = {
-        'datasetName': ctu,
-        'stringDatasetName': 'ctu',
-        'selected': 'scenario7'
+        'datasetName': datasetName,
+        'stringDatasetName': stringDatasetName,
+        'selected': selected
     }
-    ##### with input menu
-    # datasetName, stringDatasetName, selected = datasetMenu.getData()
-    ##### with input menu
     
     objData = dftoGraph(datasetDetail)
 
