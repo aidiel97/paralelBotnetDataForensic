@@ -14,7 +14,7 @@ import pkg.graph.domain as grp
 
 if __name__ == "__main__":
   listMenu = [
-    ('Generate Machine Learning Models', ml.modellingWithCTU),
+    ('Generate Machine Learning Models', ml.trainingAllAlgorithm),
     ('Graph Classification [Modeling]', grp.graphClassificationModelling),
     ('[Single Dataset] Graph Dataset Generator', grp.singleData),
     ('[Test All Dataset] Graph Dataset Generator', grp.executeAllData),

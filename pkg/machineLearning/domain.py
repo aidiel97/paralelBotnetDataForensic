@@ -4,6 +4,7 @@ import pkg.preProcessing.handlingNull as null
 import pkg.preProcessing.cleansing as cleansing
 import pkg.machineLearning.machineLearning as ml
 import pkg.miner.domain as miner
+import interfaces.cli.dataset as datasetMenu
 
 from helpers.utilities.watcher import *
 from helpers.common.main import *
@@ -95,6 +96,39 @@ def modellingWithCTU(algorithm='randomForest'):
 
   watcherEnd(ctx, start)
 
+def modellingWithCTUGraph(algorithm='randomForest'):
+  ctx = 'Modelling with CTU dataset'
+  start = watcherStart(ctx)
+
+  #modelling
+  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
+  trainDataset = ['scenario3','scenario4','scenario5','scenario7','scenario10','scenario11','scenario12','scenario13']
+  arrayDf = []
+  datasetName = nccGraphCTU
+  stringDatasetName = 'nccGraphCTU'
+  for selected in trainDataset:
+    arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
+  df = pd.concat(arrayDf, axis=0)
+  df.reset_index(drop=True, inplace=True)
+  df = preProcessingModule(df) # pre-processing
+  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
+
+  categorical_features=[feature for feature in df.columns if (
+    df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
+  )]
+  x = df.drop(categorical_features,axis=1)
+  y = df['ActivityLabel']
+  ml.modelling(x, y, algorithm)
+  #modelling
+
+  #evaluate
+  selected = 'scenario7'
+  test_df = loader.binetflow(datasetName, selected, stringDatasetName)
+  predict(test_df, algorithm)
+  #evaluate
+
+  watcherEnd(ctx, start)
+
 def executeAllData():
   ctx='Machine learning Classification - Execute All Data'
   start = watcherStart(ctx)
@@ -133,15 +167,22 @@ def singleData():
   start = watcherStart(ctx)
 
   for algo in list(ml.algorithmDict.keys()):
-    modellingWithCTU(algo)
+    # modellingWithCTU(algo)
     ##### single subDataset
-    datasetDetail={
-      'datasetName': ctu,
-      'stringDatasetName': 'ctu',
-      'selected': 'scenario11'
-    }
+    # datasetDetail={
+    #   'datasetName': ctu,
+    #   'stringDatasetName': 'ctu',
+    #   'selected': 'scenario11'
+    # }
     ##### with input menu
-    # datasetName, stringDatasetName, selected = datasetMenu.getData()
+    datasetName, stringDatasetName, selected = datasetMenu.getData()
+    
+    datasetDetail = {
+        'datasetName': datasetName,
+        'stringDatasetName': stringDatasetName,
+        'selected': selected
+    }
+    
     ##### with input menu
     raw_df = loader.binetflow(
       datasetDetail['datasetName'],
@@ -213,3 +254,8 @@ def spamClassification():
     
     # datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
     # miner.methodEvaluation(datasetName, raw_df, new_df, algo)
+
+def trainingAllAlgorithm():
+  for algo in list(ml.algorithmDict.keys()):
+    modellingWithCTUGraph(algo)
+    # modellingWithCTU(algo)
