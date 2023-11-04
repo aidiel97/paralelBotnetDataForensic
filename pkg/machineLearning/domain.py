@@ -45,6 +45,18 @@ def preProcessingModule(df):
   
   return df
 
+def predictGraph(df, algorithm='randomForest'):
+  ctx = 'Graph Classification - Test'
+  start = watcherStart(ctx)
+
+  x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
+  y = df['ActivityLabel']
+  predictionResult = ml.classification(x, algorithm)
+  ml.evaluation(ctx, y, predictionResult, algorithm)
+  
+  watcherEnd(ctx, start)
+  return predictionResult
+
 def predict(df, algorithm='randomForest'):
   ctx = 'Machine Learning Classification'
   start = watcherStart(ctx)
@@ -249,3 +261,34 @@ def trainingAllAlgorithm():
   for algo in list(ml.algorithmDict.keys()):
     modellingWithCTUGraph(df, algo)
     # modellingWithCTU(algo)
+
+def executeAllDataGraph():
+  ctx='Graph Classification - Execute All Data'
+  start = watcherStart(ctx)
+  ##### loop all dataset
+  for dataset in [nccGraphCTU, nccGraphNCC, nccGraphNCC2]:
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
+
+      raw_df = loader.binetflow(
+        datasetDetail['datasetName'],
+        datasetDetail['selected'],
+        datasetDetail['stringDatasetName'])
+
+      df = raw_df.copy() #get a copy from dataset to prevent processed data
+      for algo in list(ml.algorithmDict.keys()):
+        result = predictGraph(df, algo)
+        raw_df['predictionResult'] = result
+        new_df = raw_df[raw_df['predictionResult'] == 1]
+        
+        datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
+        miner.methodEvaluation(datasetName, raw_df, new_df, algo)
+  ##### loop all dataset
+
+  watcherEnd(ctx, start)
