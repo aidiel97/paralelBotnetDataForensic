@@ -30,7 +30,7 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
     edges = []
     objAddress = {}
     
-    columns_of_interest = ['SrcAddr']
+    columns_of_interest = ['Node-Id']
     subset_df = df[columns_of_interest]
     unique_combinations = subset_df.drop_duplicates()
     listSrcAddress = [tuple(x) for x in unique_combinations.values]
@@ -44,7 +44,7 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
     addNodeFromIp(G, listSrcAddress)
     addNodeFromIp(G, listDstAddress)
     for index, row in df.iterrows():
-        addressName = row['SrcAddr']+'-'+row['DstAddr']
+        addressName = row['Node-Id']+'-'+row['DstAddr']
 
         if addressName in objAddress:
             objAddress[addressName] += 1
@@ -52,10 +52,10 @@ def generatorWithEdgesArray(G, df): #if usePkts=True, will weighting by total Pa
             objAddress[addressName] = 1
 
     for index, row in df.iterrows():
-        addressName = row['SrcAddr']+'-'+row['DstAddr']
+        addressName = row['Node-Id']+'-'+row['DstAddr']
         
         weight = objAddress[addressName]
-        source = row['SrcAddr']
+        source = row['Node-Id']
         dest = row['DstAddr']
 
         if (source,dest,weight) not in edges:

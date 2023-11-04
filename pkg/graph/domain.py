@@ -21,13 +21,11 @@ from sklearn.preprocessing import StandardScaler
 def graphToTabular(G, raw_df):
     ctx = 'Graph based analysis - Graph to Tabular'
     start = watcherStart(ctx)
+    srcId = ['Node-Id']
 
     # raw_df['ActivityLabel'] = raw_df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
     # botnet = raw_df['ActivityLabel'] == 1
     # botnet_df = raw_df[botnet]
-    raw_df['Unix'] = raw_df['StartTime'].apply(pp.timeToUnix).fillna(0)
-    raw_df = raw_df.sort_values(by=['Unix'])
-    raw_df['Diff'] = raw_df['Unix'].diff().apply(lambda x: x if x >= 0 else None) #calculate diff with before event, negative convert to 0
     listBotnetAddress = ['147.32.84.165', '147.32.84.191', '147.32.84.192', '147.32.84.193', '147.32.84.204', '147.32.84.205', '147.32.84.206', '147.32.84.207', '147.32.84.208', '147.32.84.209']
 
     # normal = raw_df['ActivityLabel'] == 0
@@ -35,25 +33,25 @@ def graphToTabular(G, raw_df):
     # listNormalAddress = normal_df['SrcAddr'].unique()
     
     #group by sourcebytes
-    result_src_df = raw_df.groupby(['SrcAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    result_src_df = raw_df.groupby(srcId)['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     result_dst_df = raw_df.groupby(['DstAddr'])['SrcBytes'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     result_src_df = result_src_df.fillna(0)
     result_dst_df = result_dst_df.fillna(0)
 
     #group by dur
-    dur_src_df = raw_df.groupby(['SrcAddr'])['Dur'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    dur_src_df = raw_df.groupby(srcId)['Dur'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     dur_dst_df = raw_df.groupby(['DstAddr'])['Dur'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     dur_src_df = dur_src_df.fillna(0)
     dur_dst_df = dur_dst_df.fillna(0)
     
     #group by diff
-    diff_src_df = raw_df.groupby(['SrcAddr'])['Diff'].agg(['mean', 'std', 'median', 'sum']).reset_index()
+    diff_src_df = raw_df.groupby(srcId)['Diff'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     diff_dst_df = raw_df.groupby(['DstAddr'])['Diff'].agg(['mean', 'std', 'median', 'sum']).reset_index()
     diff_src_df = diff_src_df.fillna(0)
     diff_dst_df = diff_dst_df.fillna(0)
     
     #group by unix timestamp
-    unix_src_df = raw_df.groupby(['SrcAddr'])['Unix'].agg(['min', 'max']).reset_index()
+    unix_src_df = raw_df.groupby(srcId)['Unix'].agg(['min', 'max']).reset_index()
     unix_dst_df = raw_df.groupby(['DstAddr'])['Unix'].agg(['min', 'max']).reset_index()
     unix_src_df = unix_src_df.fillna(0)
     unix_dst_df = unix_dst_df.fillna(0)
@@ -64,24 +62,26 @@ def graphToTabular(G, raw_df):
     for node in G.nodes():
         label = 'botnet'
         activityLabel = 1
-        if node not in listBotnetAddress:
+        splitNode = node[0].split("-") #node is "147.32.84.181-9" so we need to split "-" to get only the IP
+        ipNode = splitNode[0]
+        if ipNode not in listBotnetAddress:
             label = 'normal'
             activityLabel = 0
         
-        # out_data = raw_df[raw_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([node])]
+        # out_data = raw_df[raw_df[[srcId,'Proto']].apply(tuple, axis=1).isin([node])]
         # out_srcDesc = out_data['SrcBytes'].describe()
         # in_data = raw_df[raw_df[['DstAddr','Proto']].apply(tuple, axis=1).isin([node])]
         # in_srcDesc = in_data['SrcBytes'].describe()
-        out_data = result_src_df.loc[result_src_df['SrcAddr'] == node[0]]
+        out_data = result_src_df.loc[result_src_df[srcId[0]] == node[0]]
         in_data = result_dst_df.loc[result_dst_df['DstAddr'] == node[0]]
 
-        dur_out_data = dur_src_df.loc[dur_src_df['SrcAddr'] == node[0]]
+        dur_out_data = dur_src_df.loc[dur_src_df[srcId[0]] == node[0]]
         dur_in_data = dur_dst_df.loc[dur_dst_df['DstAddr'] == node[0]]
         
-        diff_out_data = diff_src_df.loc[diff_src_df['SrcAddr'] == node[0]]
+        diff_out_data = diff_src_df.loc[diff_src_df[srcId[0]] == node[0]]
         diff_in_data = diff_dst_df.loc[diff_dst_df['DstAddr'] == node[0]]
 
-        unix_out_data = unix_src_df.loc[unix_src_df['SrcAddr'] == node[0]]
+        unix_out_data = unix_src_df.loc[unix_src_df[srcId[0]] == node[0]]
         unix_in_data = unix_dst_df.loc[unix_dst_df['DstAddr'] == node[0]]
 
         obj={
@@ -202,7 +202,37 @@ def dftoGraph(datasetDetail):
     # new_df = botnet_df[botnet_df[['SrcAddr','Proto']].apply(tuple, axis=1).isin([keyFilter])]
     # print(new_df['SrcBytes'].sum())
 
+    raw_df['Unix'] = raw_df['StartTime'].apply(pp.timeToUnix).fillna(0)
+    raw_df = raw_df.sort_values(by=['SrcAddr', 'Unix'])
+    raw_df = raw_df.reset_index(drop=True)
+    
+    # Function to calculate the "Diff" column
+    def calculate_diff(row):
+        index = row.name
+        if index > 0 and raw_df.loc[index, 'SrcAddr'] == raw_df.loc[index - 1, 'SrcAddr']:
+            return row['Unix'] - raw_df.loc[index - 1, 'Unix']
+        return None
+    
+    raw_df['Diff'] = raw_df.apply(calculate_diff, axis=1)
+
+    # Initialize variables
+    x = 0
+    prev_src_addr = None
+    # Custom function to calculate "Node-Id"
+    def calculate_node_id(row):
+        nonlocal x, prev_src_addr
+        if prev_src_addr is None or row['SrcAddr'] != prev_src_addr:
+            x = 0
+        elif row['Diff'] > 13:
+            x += 1
+        prev_src_addr = row['SrcAddr']
+        return row['SrcAddr'] + "-" + str(x)
+
+    # Apply the custom function to create the "Node-Id" column
+    raw_df['Node-Id'] = raw_df.apply(calculate_node_id, axis=1)
+    raw_df['Diff'] = raw_df['Diff'].fillna(0)
     raw_df = raw_df.fillna('-')
+
     G = nx.DiGraph(directed=True)
     generatorWithEdgesArray(G, raw_df)
     objData = graphToTabular(G, raw_df)

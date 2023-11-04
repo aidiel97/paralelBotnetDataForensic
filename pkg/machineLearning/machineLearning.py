@@ -36,7 +36,7 @@ def modelling(x, y, algorithm='randomForest'):
   watcherEnd(ctx, start)
 
 def classification(x, algorithm='randomForest'):
-  ctx= 'Classifying Data'
+  ctx= 'Classifying Data - '+algorithm
   start= watcherStart(ctx)
 
   model = pickle.load(open(modelFileName(algorithm), 'rb'))
@@ -48,6 +48,7 @@ def classification(x, algorithm='randomForest'):
 def evaluation(ctx, y, predictionResult, algorithm='randomForest'):
   tn, fp, fn, tp = confusion_matrix(y, predictionResult).ravel()
 
+  print('\nAlgorithm\t\t\t: '+algorithm)
   print('\nTotal input data\t\t\t: '+str(y.shape[0]))
   print('TN (predict result 0, actual 0)\t\t: '+str(tn))
   print('FP (predict result 1, actual 0)\t\t: '+str(fp))
