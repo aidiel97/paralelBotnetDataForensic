@@ -266,7 +266,7 @@ def executeAllDataGraph():
   ctx='Graph Classification - Execute All Data'
   start = watcherStart(ctx)
   ##### loop all dataset
-  for dataset in [nccGraphCTU, nccGraphNCC, nccGraphNCC2]:
+  for dataset in listAvailableGraphDatasets:
     print('\n'+dataset['name'])
     for scenario in dataset['list']:
       print(scenario)
