@@ -96,21 +96,9 @@ def modellingWithCTU(algorithm='randomForest'):
 
   watcherEnd(ctx, start)
 
-def modellingWithCTUGraph(algorithm='randomForest'):
+def modellingWithCTUGraph(df, algorithm='randomForest'):
   ctx = 'Modelling with CTU dataset'
   start = watcherStart(ctx)
-
-  #modelling
-  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
-  trainDataset = ['scenario3','scenario4','scenario5','scenario7','scenario10','scenario11','scenario12','scenario13']
-  arrayDf = []
-  datasetName = nccGraphCTU
-  stringDatasetName = 'nccGraphCTU'
-  for selected in trainDataset:
-    arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
-  df = pd.concat(arrayDf, axis=0)
-  df.reset_index(drop=True, inplace=True)
-  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
 
   x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
   y = df['ActivityLabel']
@@ -245,7 +233,19 @@ def spamClassification():
     # datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
     # miner.methodEvaluation(datasetName, raw_df, new_df, algo)
 
-def trainingAllAlgorithm():
+def trainingAllAlgorithm():  
+  #modelling
+  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
+  trainDataset = ['scenario3','scenario4','scenario5','scenario7','scenario10','scenario11','scenario12','scenario13']
+  arrayDf = []
+  datasetName = nccGraphCTU
+  stringDatasetName = 'nccGraphCTU'
+  for selected in trainDataset:
+    arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
+  df = pd.concat(arrayDf, axis=0)
+  df.reset_index(drop=True, inplace=True)
+  #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
+
   for algo in list(ml.algorithmDict.keys()):
-    modellingWithCTUGraph(algo)
+    modellingWithCTUGraph(df, algo)
     # modellingWithCTU(algo)
