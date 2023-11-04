@@ -45,8 +45,7 @@ def preProcessingModule(df):
   
   return df
 
-def predictGraph(df, algorithm='randomForest'):
-  ctx = 'Graph Classification - Test'
+def predictGraph(ctx, df, algorithm='randomForest'):
   start = watcherStart(ctx)
 
   x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
@@ -282,8 +281,9 @@ def executeAllDataGraph():
         datasetDetail['stringDatasetName'])
 
       df = raw_df.copy() #get a copy from dataset to prevent processed data
+      predictCtx = datasetDetail['stringDatasetName']+"-"+datasetDetail['selected']
       for algo in list(ml.algorithmDict.keys()):
-        predictGraph(df, algo)
+        predictGraph(predictCtx, df, algo)
   ##### loop all dataset
 
   watcherEnd(ctx, start)
