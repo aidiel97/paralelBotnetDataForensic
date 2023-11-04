@@ -110,22 +110,12 @@ def modellingWithCTUGraph(algorithm='randomForest'):
     arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
   df = pd.concat(arrayDf, axis=0)
   df.reset_index(drop=True, inplace=True)
-  df = preProcessingModule(df) # pre-processing
   #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
 
-  categorical_features=[feature for feature in df.columns if (
-    df[feature].dtypes=='O' or feature =='SensorId' or feature =='ActivityLabel'
-  )]
-  x = df.drop(categorical_features,axis=1)
+  x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
   y = df['ActivityLabel']
   ml.modelling(x, y, algorithm)
   #modelling
-
-  #evaluate
-  selected = 'scenario7'
-  test_df = loader.binetflow(datasetName, selected, stringDatasetName)
-  predict(test_df, algorithm)
-  #evaluate
 
   watcherEnd(ctx, start)
 

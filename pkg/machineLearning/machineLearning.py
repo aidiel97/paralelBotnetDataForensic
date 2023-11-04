@@ -14,13 +14,13 @@ from sklearn.metrics import confusion_matrix
 
 algorithmDict = {
   'decisionTree': DecisionTreeClassifier(),
-  'randomForest': RandomForestClassifier(n_estimators=100),
-  'svc' : SVC(kernel='linear', C=10.0, random_state=1),
+  'randomForest': RandomForestClassifier(),
+  'svc' : SVC(),
   'naiveBayes': GaussianNB(),
   'knn': KNeighborsClassifier(),
-  'logisticRegression' : LogisticRegression(C=10000, solver='liblinear'),
-  'xGBoost': GradientBoostingClassifier(n_estimators=100, learning_rate=1.0, max_depth=1, random_state=0),
-  'ann': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
+  'logisticRegression' : LogisticRegression(),
+  'xGBoost': GradientBoostingClassifier(),
+  # 'ann': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
 }
 
 def modelFileName(algorithm): return 'collections/'+algorithm+'.pkl'

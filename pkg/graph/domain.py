@@ -218,7 +218,6 @@ def graphClassificationModelling():
     ctx = 'Graph based classification - Modelling'
     start = watcherStart(ctx)
 
-    
     keysAlg = list(ml.algorithmDict.keys())
     print("Choose one of this algorithm to train :")
     
@@ -241,9 +240,6 @@ def graphClassificationModelling():
     df = pd.concat(arrayDf, axis=0)
     df.reset_index(drop=True, inplace=True)
     botIP = ['147.32.84.165', '147.32.84.191', '147.32.84.192', '147.32.84.193', '147.32.84.204', '147.32.84.205', '147.32.84.206', '147.32.84.207', '147.32.84.208', '147.32.84.209']
-
-    for col in protoDict.keys():
-        df[col] = (df['Proto'] == col).astype(int)
 
     df['CVReceivedBytes'] = df['CVReceivedBytes'].fillna(0)
     df['CVSentBytes'] = df['CVSentBytes'].fillna(0)
