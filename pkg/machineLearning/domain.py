@@ -283,12 +283,7 @@ def executeAllDataGraph():
 
       df = raw_df.copy() #get a copy from dataset to prevent processed data
       for algo in list(ml.algorithmDict.keys()):
-        result = predictGraph(df, algo)
-        raw_df['predictionResult'] = result
-        new_df = raw_df[raw_df['predictionResult'] == 1]
-        
-        datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-        miner.methodEvaluation(datasetName, raw_df, new_df, algo)
+        predictGraph(df, algo)
   ##### loop all dataset
 
   watcherEnd(ctx, start)
