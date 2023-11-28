@@ -48,11 +48,16 @@ def preProcessingModule(df):
 def predictGraph(ctx, df, algorithm='randomForest'):
   start = watcherStart(ctx)
 
-  x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
+  x = df[[
+    # 'OutDegree','IntensityOutDegree',
+    'InDegree','IntensityInDegree'
+    ]]
   y = df['ActivityLabel']
   predictionResult = ml.classification(x, algorithm)
   ml.evaluation(ctx, y, predictionResult, algorithm)
   
+  df['Prediction'] = predictionResult
+  df.to_csv('collections/prediction/out/'+ctx+'-'+algorithm+'.csv', index=False)
   watcherEnd(ctx, start)
   return predictionResult
 
@@ -111,7 +116,10 @@ def modellingWithCTUGraph(df, algorithm='randomForest'):
   ctx = 'Modelling with CTU dataset'
   start = watcherStart(ctx)
 
-  x = df[['OutDegree','IntensityOutDegree','InDegree','IntensityInDegree']]
+  x = df[[
+        # 'OutDegree','IntensityOutDegree',
+        'InDegree','IntensityInDegree'
+          ]]
   y = df['ActivityLabel']
   ml.modelling(x, y, algorithm)
   #modelling
@@ -254,6 +262,7 @@ def trainingAllAlgorithm():
   for selected in trainDataset:
     arrayDf.append(loader.binetflow(datasetName, selected, stringDatasetName))
   df = pd.concat(arrayDf, axis=0)
+  df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
   df.reset_index(drop=True, inplace=True)
   #### PRE DEFINED TRAINING DATASET FROM http://dx.doi.org/10.1016/j.cose.2014.05.011
 
@@ -265,6 +274,7 @@ def executeAllDataGraph():
   ctx='Graph Classification - Execute All Data'
   start = watcherStart(ctx)
   ##### loop all dataset
+  arrayDf = []
   for dataset in listAvailableGraphDatasets:
     print('\n'+dataset['name'])
     for scenario in dataset['list']:
@@ -275,15 +285,21 @@ def executeAllDataGraph():
         'selected': scenario
       }
 
-      raw_df = loader.binetflow(
-        datasetDetail['datasetName'],
-        datasetDetail['selected'],
-        datasetDetail['stringDatasetName'])
+      # raw_df = loader.binetflow(
+      #   datasetDetail['datasetName'],
+      #   datasetDetail['selected'],
+      #   datasetDetail['stringDatasetName'])
+      # df = raw_df.copy() #get a copy from dataset to prevent processed data
+      arrayDf.append(loader.binetflow(datasetDetail['datasetName'], datasetDetail['selected'], datasetDetail['stringDatasetName']))
+  
+  df = pd.concat(arrayDf, axis=0)
+  df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
+  train, test = loader.splitDataFrameWithProportion(df)
 
-      df = raw_df.copy() #get a copy from dataset to prevent processed data
-      predictCtx = datasetDetail['stringDatasetName']+"-"+datasetDetail['selected']
-      for algo in list(ml.algorithmDict.keys()):
-        predictGraph(predictCtx, df, algo)
+  predictCtx = 'NCC-Graph-v4'
+  for algo in list(ml.algorithmDict.keys()):
+    modellingWithCTUGraph(train, algo)
+    predictGraph(predictCtx, test, algo)
   ##### loop all dataset
 
   watcherEnd(ctx, start)

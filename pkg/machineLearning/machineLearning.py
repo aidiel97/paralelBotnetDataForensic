@@ -15,11 +15,11 @@ from sklearn.metrics import confusion_matrix
 algorithmDict = {
   'decisionTree': DecisionTreeClassifier(),
   'randomForest': RandomForestClassifier(),
-  'svc' : SVC(),
   'naiveBayes': GaussianNB(),
-  'knn': KNeighborsClassifier(),
   'logisticRegression' : LogisticRegression(),
   'xGBoost': GradientBoostingClassifier(),
+  # 'svc' : SVC(),
+  # 'knn': KNeighborsClassifier(),
   # 'ann': MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
 }
 
