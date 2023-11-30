@@ -71,6 +71,8 @@ def methodEvaluation(dataset, actual_df, predicted_df, method='Proposed Sequence
 def main():
   ctx='Sequential Pattern Mining (Main) - Single Dataset'
   start = watcherStart(ctx)
+  
+  processingTimeStart = time.time()
   ##### single subDataset
   datasetDetail={
     'datasetName': ctu,
@@ -96,7 +98,10 @@ def main():
   new_df = packetAnalysis(new_df)
 
   datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-  methodEvaluation(datasetName, raw_df, new_df, 'Proposed Sequence Pattern Miner')
+  processingTimeEnd = time.time()
+  processingTime = '{:.3f}'.format(processingTimeEnd - processingTimeStart)
+  context = 'Sequence Pattern Miner: ' + processingTime + ' s'
+  methodEvaluation(datasetName, raw_df, new_df, context)
   ##### single subDataset
 
   watcherEnd(ctx, start)
@@ -109,6 +114,7 @@ def executeAllData():
   for dataset in listAvailableDatasets[:3]:
     print('\n'+dataset['name'])
     for scenario in dataset['list']:
+      processingTimeStart = time.time()
       print(scenario)
       datasetDetail={
         'datasetName': dataset['list'],
@@ -129,7 +135,10 @@ def executeAllData():
       new_df = packetAnalysis(new_df)
 
       datasetName = datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']
-      methodEvaluation(datasetName, raw_df, new_df, 'Proposed Sequence Pattern Miner')
+      processingTimeEnd = time.time()
+      processingTime = '{:.3f}'.format(processingTimeEnd - processingTimeStart)
+      context = 'Sequence Pattern Miner: ' + processingTime + ' s'
+      methodEvaluation(datasetName, raw_df, new_df, context)
   ##### loop all dataset
 
   watcherEnd(ctx, start)
