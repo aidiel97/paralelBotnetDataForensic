@@ -69,14 +69,14 @@ def flow(datasetName, stringDatasetName, shortName, selected, feature):
   sequenceOf = 'SrcAddr' #sequence created base on DstAddr / SrcAddr
 
   df = loader.binetflow(datasetName, selected, stringDatasetName)
+  df['ActivityLabel'] = df['Label'].apply(preProcessing.labelSimplier)
+  df['Unix'] = df['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
+  df = df.sort_values(by=[sequenceOf, 'StartTime', 'ActivityLabel'])
+  df['Diff'] = df['Unix'].diff().apply(lambda x: x if x >= 0 else None) #calculate diff with before event, negative convert to 0
+
   train, test = loader.splitDataFrameWithProportion(df)
   train.to_csv('collections/split/'+shortName+'-'+selected+'-train.csv', index=False, header=False)
   test.to_csv('collections/split/'+shortName+'-'+selected+'-test.csv', index=False, header=False)
-
-  train['ActivityLabel'] = train['Label'].apply(preProcessing.labelSimplier)
-  train['Unix'] = train['StartTime'].apply(preProcessing.timeToUnix).fillna(0)
-  train = train.sort_values(by=[sequenceOf, 'StartTime', 'ActivityLabel'])
-  train['Diff'] = train['Unix'].diff().apply(lambda x: x if x >= 0 else None) #calculate diff with before event, negative convert to 0
 
   botnet = train[train['ActivityLabel'] == 'botnet']
   normal = train[train['ActivityLabel'] == 'normal']
