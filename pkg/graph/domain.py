@@ -178,3 +178,30 @@ def executeAllData():
   ##### loop all dataset
 
   watcherEnd(ctx, start)
+
+def combineDataset():
+  ctx='Graph based analysis - Execute All Data'
+  start = watcherStart(ctx)
+  arrayDf = []
+
+  ##### loop all dataset
+  for dataset in listAvailableDatasets[:3]:
+    print('\n'+dataset['name'])
+    for scenario in dataset['list']:
+      print(scenario)
+      datasetDetail={
+        'datasetName': dataset['list'],
+        'stringDatasetName': dataset['name'],
+        'selected': scenario
+      }
+      arrayDf.append(loader.binetflow(datasetDetail['datasetName'], datasetDetail['selected'], datasetDetail['stringDatasetName']))
+
+  df = pd.concat(arrayDf, axis=0)
+  df['ActivityLabel'] = df['Label'].str.contains('botnet', case=False, regex=True).astype(int)
+  train, test = loader.splitDataFrameWithProportion(df)
+  
+  train.to_csv('collections/train.csv', index=False)
+  test.to_csv('collections/test.csv', index=False)
+  ##### loop all dataset
+
+  watcherEnd(ctx, start)
