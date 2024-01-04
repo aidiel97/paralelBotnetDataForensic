@@ -39,6 +39,40 @@ def splitDataFrameWithProportion(dataFrame, trainProportion=defaultTrainProporti
   watcherEnd(ctx, start)
   return train, test
 
+def splitDataFrameWithIndex(dataFrame, trainProportion=defaultTrainProportion):
+  ctx='Split Data Frame With Index'
+  start= watcherStart(ctx)
+
+  normal_df=dataFrame[dataFrame['ActivityLabel'] == 'normal'] #create new normal custom dataframe
+  bot_df=dataFrame[dataFrame['ActivityLabel'] == 'botnet'] #create a new data frame for bots
+  bg_df=dataFrame[dataFrame['ActivityLabel'] == 'background'] #create a new data frame for bots
+
+  msk_normal = np.random.rand(len(normal_df)) < trainProportion #get random 20% from normal
+  msk_bot = np.random.rand(len(bot_df)) < trainProportion #get random 20% from bot
+
+  trainPortionNormal = int(len(normal_df) * trainProportion)
+  trainPortionBotnet = int(len(bot_df) * trainProportion)
+  trainPortionBg = int(len(bg_df) * trainProportion)
+
+  #split normal dataset
+  normal_dfTrain = normal_df[:trainPortionNormal]
+  normal_dfTest = normal_df[trainPortionNormal:]
+
+  #split bot dataset
+  bot_dfTrain = bot_df[:trainPortionNormal]
+  bot_dfTest = bot_df[trainPortionNormal:]
+
+  #split bg dataset
+  bg_dfTrain = bg_df[:trainPortionNormal]
+  bg_dfTest = bg_df[trainPortionNormal:]
+  
+  #combine dataTest and dataTrain
+  train = pd.concat([normal_dfTrain, bot_dfTrain, bg_dfTrain])
+  test = pd.concat([normal_dfTest, bot_dfTest, bg_dfTest])
+
+  watcherEnd(ctx, start)
+  return train, test
+
 #only take samples for training, testing with all data
 def splitTestAllDataframe(dataFrame, trainProportion=defaultTrainProportion):
   ctx='Split Test All Dataframe'
