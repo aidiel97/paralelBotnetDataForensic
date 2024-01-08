@@ -4,6 +4,22 @@ import numpy as np
 from helpers.utilities.watcher import *
 from helpers.common.main import *
 
+def rawCsv(fileName):
+  ctx=fileName+' Dataset Loader'
+  start = watcherStart(ctx)
+
+  raw_df=pd.read_csv(fileName)
+  df_column_name_1 = ['StartTime','Dur','Proto','SrcAddr','Sport','Dir','DstAddr','Dport','State','sTos','dTos','TotPkts','TotBytes','SrcBytes','Label']
+  df_column_name_2 = ['StartTime','Dur','Proto','SrcAddr','Sport','Dir','DstAddr','Dport','State','sTos','dTos','TotPkts','TotBytes','SrcBytes','Label','ActivityLabel','BotnetName','SensorId']
+
+  if len(raw_df.columns) == len(df_column_name_1):
+    raw_df.columns = df_column_name_1
+  else:
+    raw_df.columns = df_column_name_2
+
+  watcherEnd(ctx, start)
+  return raw_df
+
 def binetflow(dataset, scenario, stringDataset=''):
   ctx=stringDataset.upper()+' '+scenario+' Dataset Loader'
   start = watcherStart(ctx)

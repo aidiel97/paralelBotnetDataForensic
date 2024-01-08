@@ -2,6 +2,7 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 import time
+import os
 
 import helpers.utilities.dataLoader as loader
 import pkg.preProcessing.transform as pp
@@ -148,18 +149,18 @@ def executeAllData():
   ctx='Graph based analysis - Execute All Data'
   start = watcherStart(ctx)
 
-  ##### loop all dataset
-  for dataset in listAvailableDatasets[:3]:
-    print('\n'+dataset['name'])
-    for scenario in dataset['list']:
-        print(scenario)
-        datasetDetail={
-            'datasetName': dataset['list'],
-            'stringDatasetName': dataset['name'],
-            'selected': scenario
-        }
+  ##### loop all dataset (binetflow)
+#   for dataset in listAvailableDatasets[:3]:
+#     print('\n'+dataset['name'])
+#     for scenario in dataset['list']:
+#         print(scenario)
+#         datasetDetail={
+#             'datasetName': dataset['list'],
+#             'stringDatasetName': dataset['name'],
+#             'selected': scenario
+#         }
 
-        objData = dftoGraph(datasetDetail)
+#         objData = dftoGraph(datasetDetail)
 
         # df = pd.DataFrame(objData.values())
         # df = df.fillna(0)
@@ -175,7 +176,17 @@ def executeAllData():
         # print(predictionResult)
         # ml.evaluation(ctx, y_test, predictionResult, 'knn')
 
-  ##### loop all dataset
+  ##### loop all dataset (csv)
+  # Specify the directory path
+  directory_path = 'collections/split/'
+
+  # Get all file names in the directory
+  file_names = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
+
+  # Print the file names
+  print("File names in the directory:")
+  for file_name in file_names:
+      dftoGraph(directory_path+file_name)
 
   watcherEnd(ctx, start)
 

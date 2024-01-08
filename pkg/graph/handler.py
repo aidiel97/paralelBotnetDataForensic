@@ -16,11 +16,16 @@ from pkg.graph.extractor import *
 def dftoGraph(datasetDetail):
     ctx = 'Graph based analysis - DF to Graph'
     start = watcherStart(ctx)
-    raw_df = loader.binetflow(
-        datasetDetail['datasetName'],
-        datasetDetail['selected'],
-        datasetDetail['stringDatasetName'])
 
+    # check the varaible is string or dictionary
+    if isinstance(datasetDetail, str):
+        raw_df = loader.rawCsv(datasetDetail)
+    else:
+        raw_df = loader.binetflow(
+            datasetDetail['datasetName'],
+            datasetDetail['selected'],
+            datasetDetail['stringDatasetName'])
+    
     raw_df['Unix'] = raw_df['StartTime'].apply(pp.timeToUnix).fillna(0)
     
     # Function to calculate the "Diff" column
@@ -40,7 +45,7 @@ def dftoGraph(datasetDetail):
         nonlocal x, prev_src_addr
         if prev_src_addr is None or row['SrcAddr'] != prev_src_addr:
             x = 0
-        elif row['Diff'] > 13:
+        elif row['Diff'] > DEFAULT_TIME_GAP:
             x += 1
         prev_src_addr = row['SrcAddr']
         return row['SrcAddr'] + "-" + str(x)
@@ -68,7 +73,6 @@ def dftoGraph(datasetDetail):
 
     raw_df['Diff'] = raw_df['Diff'].fillna(0)
     raw_df = raw_df.fillna('-')
-    raw_df.to_csv('collections/ini.csv')
 
     extractGraph(raw_df, datasetDetail)
 

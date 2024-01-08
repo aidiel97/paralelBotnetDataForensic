@@ -46,7 +46,6 @@ def extractGraph(df, datasetDetail):
     src_df['Address'] = src_df['Src-Id'].str.split('-').str[0]
     src_df['Label'] = src_df['Address'].apply(lambda x: 'botnet' if x in listBotnetAddress else 'normal')
     src_df = src_df[['Address'] + [col for col in src_df.columns if col != 'Address']]
-    src_df.to_csv('collections/extract/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'-out.csv', index=False)
 
     #in degree
     node_dst_df = df.groupby(dstId).agg(InDegree = ("Src-Id", "nunique"),IntensityInDegree = ("Src-Id", "count"))
@@ -73,8 +72,17 @@ def extractGraph(df, datasetDetail):
     dst_df['Address'] = dst_df['Dst-Id'].str.split('-').str[0]
     dst_df['Label'] = dst_df['Address'].apply(lambda x: 'botnet' if x in listBotnetAddress else 'normal')
     dst_df = dst_df[['Address'] + [col for col in dst_df.columns if col != 'Address']]
-    dst_df.to_csv('collections/extract/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'-in.csv', index=False)
-
+    
+    # FOR EXPORT, check the variable is string or dictionary
+    if isinstance(datasetDetail, str):
+        datasetName = datasetDetail.replace("collections/split/", "")
+        datasetName = datasetName.replace(".csv", "")
+        src_df.to_csv('collections/extract/'+datasetName+'-out.csv', index=False)
+        dst_df.to_csv('collections/extract/'+datasetName+'-in.csv', index=False)
+    else:
+        src_df.to_csv('collections/extract/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'-out.csv', index=False)
+        dst_df.to_csv('collections/extract/'+datasetDetail['stringDatasetName']+'-'+datasetDetail['selected']+'-in.csv', index=False)
+    
     # Print a completion message
     print("Processing complete.")
     watcherEnd(ctx, start)
